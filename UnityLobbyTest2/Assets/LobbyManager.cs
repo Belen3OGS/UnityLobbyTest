@@ -58,14 +58,13 @@ public class LobbyManager : MonoBehaviour
 
     public async void CreateLobby()
     {
-        await UnityServices.InitializeAsync();
 
         // Log in a player for this game client
         loggedInPlayer = await GetPlayerFromAnonymousLoginAsync();
 
         log.Write("Creating Relay Object");
 
-        Allocation allocation = await Relay.Instance.CreateAllocationAsync(maxPlayers);
+        Allocation allocation = await RelayService.Instance.CreateAllocationAsync(maxPlayers);
 
         Debug.Log("Alocation: " + allocation);
 
@@ -80,17 +79,7 @@ public class LobbyManager : MonoBehaviour
         };
 
         // Retrieve JoinCode, with this you can join later
-        _hostData.JoinCode = await Relay.Instance.GetJoinCodeAsync(allocation.AllocationId);
-
-
-        //TODO: We probably need to change UDP with something else in order to support Mirror
-        var relayServerData = HostRelayData(allocation, "udp");
-
-        var relayNetworkParameter = new RelayNetworkParameter { ServerData = relayServerData };
-
-        await ServerBindAndListen(relayNetworkParameter);
-
-        await ClientBindAndConnect(_hostData.JoinCode);
+        _hostData.JoinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
 
         log.Write("Creating a Lobby");
 
@@ -124,6 +113,12 @@ public class LobbyManager : MonoBehaviour
         log.Write("Created new lobby " + currentLobby.Name + " " + currentLobby.Id);
 
         StartCoroutine(HeartbeatLobbyCoroutine(lobbyID, 15));
+
+        //TODO: We probably need to change UDP with something else in order to support Mirror
+        var relayServerData = HostRelayData(allocation, "udp");
+
+        await ServerBindAndListenAsHostPlayer(relayServerData);
+
     }
 
     public async void JoinLobby()
@@ -164,34 +159,44 @@ public class LobbyManager : MonoBehaviour
 
         if (response.Results.Count > 0)
         {
-            currentLobby = await LobbyService.Instance.JoinLobbyByIdAsync(
+            var joinLobbyTask = LobbyService.Instance.JoinLobbyByIdAsync(
                 lobbyId: currentLobbyList[0].Id,
                 options: new JoinLobbyByIdOptions()
                 {
                     Player = loggedInPlayer
                 });
-
-            log.Write("Joined lobby " + currentLobby.Name);
-
-            string joinCode = currentLobby.Data["JoinCode"].Value;
-
-            log.Write("Join code is " + joinCode);
-
-            await ClientBindAndConnect(joinCode);
-
-            log.Write("Conected");
-
-            // Create Object
-            _joinData = new RelayJoinData
+            while (!joinLobbyTask.IsCompleted)
             {
-                Key = joinAllocation.Key,
-                Port = (ushort)joinAllocation.RelayServer.Port,
-                AllocationID = joinAllocation.AllocationId,
-                AllocationIDBytes = joinAllocation.AllocationIdBytes,
-                ConnectionData = joinAllocation.ConnectionData,
-                HostConnectionData = joinAllocation.HostConnectionData,
-                IPv4Address = joinAllocation.RelayServer.IpV4
-            };
+                await Task.Delay(10);
+            }
+            if (joinLobbyTask.IsCompleted)
+            {
+                currentLobby = joinLobbyTask.Result;
+
+                log.Write("Joined lobby " + currentLobby.Name);
+
+                string joinCode = currentLobby.Data["JoinCode"].Value;
+
+                log.Write("Join code is " + joinCode);
+
+                await ClientBindAndConnect(joinCode);
+
+                log.Write("Conected");
+
+                // Create Object
+                _joinData = new RelayJoinData
+                {
+                    Key = joinAllocation.Key,
+                    Port = (ushort)joinAllocation.RelayServer.Port,
+                    AllocationID = joinAllocation.AllocationId,
+                    AllocationIDBytes = joinAllocation.AllocationIdBytes,
+                    ConnectionData = joinAllocation.ConnectionData,
+                    HostConnectionData = joinAllocation.HostConnectionData,
+                    IPv4Address = joinAllocation.RelayServer.IpV4
+                };
+
+            }
+
         }
 
     }
@@ -339,11 +344,11 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
-    private async Task ServerBindAndListen(RelayNetworkParameter relayNetworkParameter)
+    private async Task ServerBindAndListenAsHostPlayer(RelayServerData relayNetworkParameter)
     {
         // Create the NetworkSettings with Relay parameters
         var networkSettings = new NetworkSettings();
-        networkSettings.AddRawParameterStruct(ref relayNetworkParameter);
+        networkSettings.WithRelayParameters(serverData : ref relayNetworkParameter);
 
         // Create the NetworkDriver using NetworkSettings
         HostDriver = NetworkDriver.Create(networkSettings);
@@ -351,7 +356,7 @@ public class LobbyManager : MonoBehaviour
         // Bind the NetworkDriver to the local endpoint
         if (HostDriver.Bind(NetworkEndPoint.AnyIpv4) != 0)
         {
-            Debug.LogError("Server failed to bind");
+            log.Write("Server failed to bind");
         }
         else
         {
@@ -359,13 +364,13 @@ public class LobbyManager : MonoBehaviour
             while (!HostDriver.Bound)
             {
                 HostDriver.ScheduleUpdate().Complete();
-                await WaitMiliseconds(1000);
+                await Task.Delay(10);
             }
 
             // Once the driver is bound you can start listening for connection requests
             if (HostDriver.Listen() != 0)
             {
-                Debug.LogError("Server failed to listen");
+                log.Write("Server failed to listen");
             }
             else
             {
@@ -373,25 +378,24 @@ public class LobbyManager : MonoBehaviour
             }
         }
 
-        Debug.Log("Server bound.");
+        log.Write("Server bound.");
     }
 
     private async Task ClientBindAndConnect(string relayJoinCode)
     {
         // Send the join request to the Relay service
         joinAllocation = await RelayService.Instance.JoinAllocationAsync(relayJoinCode);
-        Debug.Log("Attempting to join allocation with join code...");
+        log.Write("Attempting to join allocation with join code... " + relayJoinCode);
 
         playerAllocationId = joinAllocation.AllocationId;
-        Debug.Log($"Player allocated with allocation Id: {playerAllocationId}");
+        log.Write($"Player allocated with allocation Id: {playerAllocationId}");
 
         // Format the server data, based on desired connectionType
         var relayServerData = PlayerRelayData(joinAllocation, "udp");
-        var relayNetworkParameter = new RelayNetworkParameter { ServerData = relayServerData };
 
         // Create the NetworkSettings with Relay parameters
         var networkSettings = new NetworkSettings();
-        networkSettings.AddRawParameterStruct(ref relayNetworkParameter);
+        networkSettings.WithRelayParameters(serverData : ref relayServerData);
 
         // Create the NetworkDriver using the Relay parameters
         PlayerDriver = NetworkDriver.Create(networkSettings);
@@ -400,18 +404,18 @@ public class LobbyManager : MonoBehaviour
         // This will send the bind request to the Relay server
         if (PlayerDriver.Bind(NetworkEndPoint.AnyIpv4) != 0)
         {
-            Debug.LogError("Client failed to bind");
+           log.Write("Client failed to bind");
         }
         else
         {
             while (!PlayerDriver.Bound)
             {
                 PlayerDriver.ScheduleUpdate().Complete();
-                await WaitMiliseconds(1);
+                await Task.Delay(10);
             }
 
             // Once the client is bound to the Relay server, you can send a connection request
-            clientConnection = PlayerDriver.Connect(relayNetworkParameter.ServerData.Endpoint);
+            clientConnection = PlayerDriver.Connect(relayServerData.Endpoint);
         }
     }
 
@@ -442,9 +446,4 @@ public class LobbyManager : MonoBehaviour
         return relayServerData;
     }
 
-
-    async Task WaitMiliseconds(int time)
-    {
-        await Task.Delay(time);
-    }
 }
