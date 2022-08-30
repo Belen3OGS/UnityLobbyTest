@@ -218,7 +218,7 @@ MonoBehaviour:
   autoStartServerBuild: 1
   serverTickRate: 30
   offlineScene: 
-  onlineScene: Assets/Mirror/Examples/Room/Scenes/OnlineScene.unity
+  onlineScene: 
   transport: {fileID: 384270271}
   networkAddress: localhost
   maxConnections: 100
