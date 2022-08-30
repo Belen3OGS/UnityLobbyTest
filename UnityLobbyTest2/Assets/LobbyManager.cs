@@ -13,9 +13,10 @@ using Random = UnityEngine.Random;
 using Unity.Services.Relay.Models;
 using Unity.Services.Relay;
 using System.Collections;
-using Mirror;
 using Unity.Networking.Transport.Relay;
 using Unity.Networking.Transport;
+using Unity.Collections;
+using UnityEngine.Assertions;
 
 public class LobbyManager : MonoBehaviour
 {
@@ -24,179 +25,63 @@ public class LobbyManager : MonoBehaviour
     [SerializeField] int maxPlayers = 8;
     [SerializeField] bool isPrivate = false;
 
-    private Lobby currentLobby;
     private Log log;
-    private RelayHostData _hostData;
-    private RelayJoinData _joinData;
-    private string lobbyID;
-    private List<Lobby> currentLobbyList;
+    private Player loggedInPlayer;
 
     public NetworkDriver HostDriver;
     public NetworkDriver PlayerDriver;
+    public string JoinCode;
 
-    public bool isRelayServerConnected { get; private set; }
-    public Player loggedInPlayer { get; private set; }
-    public Guid playerAllocationId { get; private set; }
-    public Unity.Networking.Transport.NetworkConnection clientConnection { get; private set; }
-    public JoinAllocation joinAllocation { get; private set; }
+    private NetworkConnection clientConnection;
+    private bool isRelayServerConnected = false;
+    private Lobby currentLobby;
+    private string lobbyID;
+    private List<Lobby> currentLobbyList;
+    private NativeList<NetworkConnection> serverConnections;
 
-    // Start is called before the first frame update
+
     void Start()
     {
         log = new Log(debugText);
+        serverConnections = new NativeList<NetworkConnection>(16, Allocator.Persistent);
+
     }
 
-    // Update is called once per frame
     void Update()
     {
-
-    }
-
-    //Button Functions+
-
-
-
-    public async void CreateLobby()
-    {
-        await UnityServices.InitializeAsync();
-
-        // Log in a player for this game client
-        loggedInPlayer = await GetPlayerFromAnonymousLoginAsync();
-
-        log.Write("Creating Relay Object");
-
-        Allocation allocation = await Relay.Instance.CreateAllocationAsync(maxPlayers);
-
-        Debug.Log("Alocation: " + allocation);
-
-        _hostData = new RelayHostData
+        if (HostDriver.IsCreated && isRelayServerConnected)
         {
-            Key = allocation.Key,
-            Port = (ushort)allocation.RelayServer.Port,
-            AllocationID = allocation.AllocationId,
-            AllocationIDBytes = allocation.AllocationIdBytes,
-            ConnectionData = allocation.ConnectionData,
-            IPv4Address = allocation.RelayServer.IpV4
-        };
-
-        // Retrieve JoinCode, with this you can join later
-        _hostData.JoinCode = await Relay.Instance.GetJoinCodeAsync(allocation.AllocationId);
-
-
-        //TODO: We probably need to change UDP with something else in order to support Mirror
-        var relayServerData = HostRelayData(allocation, "udp");
-
-        var relayNetworkParameter = new RelayNetworkParameter { ServerData = relayServerData };
-
-        await ServerBindAndListen(relayNetworkParameter);
-
-        await ClientBindAndConnect(_hostData.JoinCode);
-
-        log.Write("Creating a Lobby");
-
-        // Add some data to our player
-        // This data will be included in a lobby under players -> player.data
-        loggedInPlayer.Data.Add("Ready", new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, "No"));
-
-        //Creating Lobby
-        var lobbyData = new Dictionary<string, DataObject>()
-        {
-            ["Test"] = new DataObject(DataObject.VisibilityOptions.Public, "true", DataObject.IndexOptions.S1),
-            ["GameMode"] = new DataObject(DataObject.VisibilityOptions.Public, "ctf", DataObject.IndexOptions.S2),
-            ["Skill"] = new DataObject(DataObject.VisibilityOptions.Public, Random.Range(1, 51).ToString(), DataObject.IndexOptions.N1),
-            ["Rank"] = new DataObject(DataObject.VisibilityOptions.Public, Random.Range(1, 51).ToString()),
-            ["JoinCode"] = new DataObject(DataObject.VisibilityOptions.Member, _hostData.JoinCode, DataObject.IndexOptions.S3),
-        };
-
-        // Create a new lobby
-        currentLobby = await LobbyService.Instance.CreateLobbyAsync(
-            lobbyName: lobbyName.text,
-            maxPlayers: maxPlayers,
-            options: new CreateLobbyOptions()
-            {
-                Data = lobbyData,
-                IsPrivate = isPrivate,
-                Player = loggedInPlayer
-            });
-
-        lobbyID = currentLobby.Id;
-
-        log.Write("Created new lobby " + currentLobby.Name + " " + currentLobby.Id);
-
-        StartCoroutine(HeartbeatLobbyCoroutine(lobbyID, 15));
-    }
-
-    public async void JoinLobby()
-    {
-        await UnityServices.InitializeAsync();
-
-        // Log in a player for this game client
-        Player loggedInPlayer = await GetPlayerFromAnonymousLoginAsync();
-
-        log.Write("Creating filters to join");
-        List<QueryFilter> queryFilters = new List<QueryFilter>
-        {
-            // Let's search for games with open slots (AvailableSlots greater than 0)
-            new QueryFilter(
-                field: QueryFilter.FieldOptions.AvailableSlots,
-                op: QueryFilter.OpOptions.GT,
-                value: "0"),
-            new QueryFilter(QueryFilter.FieldOptions.Name,lobbyName.text,QueryFilter.OpOptions.EQ) 
-            
-        };
-        List<QueryOrder> queryOrdering = new List<QueryOrder>
-        {
-            new QueryOrder(true, QueryOrder.FieldOptions.AvailableSlots),
-            new QueryOrder(false, QueryOrder.FieldOptions.Created),
-            new QueryOrder(false, QueryOrder.FieldOptions.Name),
-        };
-        QueryResponse response = await LobbyService.Instance.QueryLobbiesAsync(new QueryLobbiesOptions()
-        {
-            Count = 100, // Override default number of results to return
-            Filters = queryFilters,
-            Order = queryOrdering,
-        });
-
-        currentLobbyList = new List<Lobby>();
-        currentLobbyList = response.Results;
-
-        log.Write("Found " + currentLobbyList.Count + " results");
-
-        if (response.Results.Count > 0)
-        {
-            currentLobby = await LobbyService.Instance.JoinLobbyByIdAsync(
-                lobbyId: currentLobbyList[0].Id,
-                options: new JoinLobbyByIdOptions()
-                {
-                    Player = loggedInPlayer
-                });
-
-            log.Write("Joined lobby " + currentLobby.Name);
-
-            string joinCode = currentLobby.Data["JoinCode"].Value;
-
-            log.Write("Join code is " + joinCode);
-
-            await ClientBindAndConnect(joinCode);
-
-            log.Write("Conected");
-
-            // Create Object
-            _joinData = new RelayJoinData
-            {
-                Key = joinAllocation.Key,
-                Port = (ushort)joinAllocation.RelayServer.Port,
-                AllocationID = joinAllocation.AllocationId,
-                AllocationIDBytes = joinAllocation.AllocationIdBytes,
-                ConnectionData = joinAllocation.ConnectionData,
-                HostConnectionData = joinAllocation.HostConnectionData,
-                IPv4Address = joinAllocation.RelayServer.IpV4
-            };
+            HostUpdate();
         }
 
+        if (PlayerDriver.IsCreated && clientConnection.IsCreated)
+        {
+            ClientUpdate();
+        }
     }
 
+    public async void CreateButton()
+    {
+        await UnityServices.InitializeAsync();
+
+        loggedInPlayer = await GetPlayerFromAnonymousLoginAsync();
+        StartCoroutine(StartingNetworkDriverAsHost());
+    }
+
+
+    public async void JoinButton()
+    {
+        await UnityServices.InitializeAsync();
+
+        loggedInPlayer = await GetPlayerFromAnonymousLoginAsync();
+
+        await FindLobbys();
+        StartCoroutine(JoinFirstLobby());
+    }
+
+
     //Functions
+
     async Task<Player> GetPlayerFromAnonymousLoginAsync()
     {
         if (!AuthenticationService.Instance.IsSignedIn)
@@ -217,7 +102,130 @@ public class LobbyManager : MonoBehaviour
         // Player objects have Get-only properties, so you need to initialize the data bag here if you want to use it
         return new Player(AuthenticationService.Instance.PlayerId, null, new Dictionary<string, PlayerDataObject>());
     }
+    IEnumerator StartingNetworkDriverAsHost()
+    {
+        // Request list of valid regions
+        var regionsTask = RelayService.Instance.ListRegionsAsync();
 
+        while (!regionsTask.IsCompleted)
+        {
+            yield return null;
+        }
+
+        if (regionsTask.IsFaulted)
+        {
+            log.Write("List regions request failed");
+            yield break;
+        }
+
+        var regionList = regionsTask.Result;
+        // pick a region from the list
+        var targetRegion = regionList[0].Id;
+
+        // Request an allocation to the Relay service
+        // with a maximum of 5 peer connections, for a maximum of 6 players.
+        var relayMaxConnections = 5;
+        var allocationTask = RelayService.Instance.CreateAllocationAsync(relayMaxConnections, targetRegion);
+
+        while (!allocationTask.IsCompleted)
+        {
+            yield return null;
+        }
+
+        if (allocationTask.IsFaulted)
+        {
+            log.Write("Create allocation request failed");
+            yield break;
+        }
+
+        var allocation = allocationTask.Result;
+
+        // Request the join code to the Relay service
+        var joinCodeTask = RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
+
+        while (!joinCodeTask.IsCompleted)
+        {
+            yield return null;
+        }
+
+        if (joinCodeTask.IsFaulted)
+        {
+            log.Write("Create join code request failed");
+            yield break;
+        }
+
+        // Get the Join Code, you can then share it with the clients so they can join
+        JoinCode = joinCodeTask.Result;
+
+        // Format the server data, based on desired connectionType
+        var relayServerData = HostRelayData(allocation, "dtls");
+
+        // Bind and listen to the Relay server
+        yield return BindAndListenAsHostPlayer(relayServerData);
+    }
+    IEnumerator BindAndListenAsHostPlayer(RelayServerData relayServerData)
+    {
+        // Create the NetworkDriver using the Relay server data
+        var settings = new NetworkSettings();
+        settings.WithRelayParameters(serverData: ref relayServerData);
+        HostDriver = NetworkDriver.Create(settings);
+
+        // Bind the NetworkDriver to the local endpoint
+        if (HostDriver.Bind(NetworkEndPoint.AnyIpv4) != 0)
+        {
+            log.Write("Server failed to bind");
+        }
+        else
+        {
+            // The binding process is an async operation; wait until bound
+            while (!HostDriver.Bound)
+            {
+                HostDriver.ScheduleUpdate().Complete();
+                yield return null;
+            }
+
+            // Once the driver is bound you can start listening for connection requests
+            if (HostDriver.Listen() != 0)
+            {
+                log.Write("Server failed to listen");
+            }
+            else
+            {
+                isRelayServerConnected = true;
+                CreateLobby();
+            }
+        }
+    }
+    async void CreateLobby()
+    {
+        //Creating Lobby
+        var lobbyData = new Dictionary<string, DataObject>()
+        {
+            ["Test"] = new DataObject(DataObject.VisibilityOptions.Public, "true", DataObject.IndexOptions.S1),
+            ["GameMode"] = new DataObject(DataObject.VisibilityOptions.Public, "ctf", DataObject.IndexOptions.S2),
+            ["Skill"] = new DataObject(DataObject.VisibilityOptions.Public, Random.Range(1, 51).ToString(), DataObject.IndexOptions.N1),
+            ["Rank"] = new DataObject(DataObject.VisibilityOptions.Public, Random.Range(1, 51).ToString()),
+            ["JoinCode"] = new DataObject(DataObject.VisibilityOptions.Member, JoinCode, DataObject.IndexOptions.S3),
+        };
+
+        // Create a new lobby
+        currentLobby = await LobbyService.Instance.CreateLobbyAsync(
+            lobbyName: lobbyName.text,
+            maxPlayers: maxPlayers,
+            options: new CreateLobbyOptions()
+            {
+                Data = lobbyData,
+                IsPrivate = isPrivate,
+                Player = loggedInPlayer
+            });
+
+        lobbyID = currentLobby.Id;
+
+        log.Write("Created new lobby " + currentLobby.Name + " " + currentLobby.Id);
+
+        StartCoroutine(HeartbeatLobbyCoroutine(lobbyID, 8));
+
+    }
     IEnumerator HeartbeatLobbyCoroutine(string lobbyId, float waitTimeSeconds)
     {
         log.Write("Lobby Heartbeat");
@@ -228,7 +236,172 @@ public class LobbyManager : MonoBehaviour
             yield return delay;
         }
     }
+    private async Task FindLobbys()
+    {
+        log.Write("Creating filters to join");
+        List<QueryFilter> queryFilters = new List<QueryFilter>
+        {
+            // Let's search for games with open slots (AvailableSlots greater than 0)
+            new QueryFilter(
+                field: QueryFilter.FieldOptions.AvailableSlots,
+                op: QueryFilter.OpOptions.GT,
+                value: "0"),
+            new QueryFilter(QueryFilter.FieldOptions.Name,lobbyName.text,QueryFilter.OpOptions.EQ)
 
+        };
+        List<QueryOrder> queryOrdering = new List<QueryOrder>
+        {
+            new QueryOrder(true, QueryOrder.FieldOptions.AvailableSlots),
+            new QueryOrder(false, QueryOrder.FieldOptions.Created),
+            new QueryOrder(false, QueryOrder.FieldOptions.Name),
+        };
+        QueryResponse response = await LobbyService.Instance.QueryLobbiesAsync(new QueryLobbiesOptions()
+        {
+            Count = 100, // Override default number of results to return
+            Filters = queryFilters,
+            Order = queryOrdering,
+        });
+
+        currentLobbyList = new List<Lobby>();
+        currentLobbyList = response.Results;
+
+        log.Write("Found " + currentLobbyList.Count + " results");
+    }
+    IEnumerator JoinFirstLobby()
+    {
+        if (currentLobbyList.Count > 0)
+        {
+            var joinLobbyTask = LobbyService.Instance.JoinLobbyByIdAsync(
+                lobbyId: currentLobbyList[0].Id,
+                options: new JoinLobbyByIdOptions()
+                {
+                    Player = loggedInPlayer
+                });
+            while (!joinLobbyTask.IsCompleted)
+            {
+                yield return null;
+            }
+            if (joinLobbyTask.IsFaulted)
+            {
+                log.Write("Join Lobby request failed");
+                yield break;
+            }
+            currentLobby = joinLobbyTask.Result;
+
+            log.Write("Joined lobby " + currentLobby.Name);
+
+            string joinCode = currentLobby.Data["JoinCode"].Value;
+
+            log.Write("Join code is " + joinCode);
+
+            yield return StartNetworkDriverAsConnectingPlayer(joinCode);
+        }
+    }
+    IEnumerator StartNetworkDriverAsConnectingPlayer(string relayJoinCode)
+    {
+        // Send the join request to the Relay service
+        var joinTask = RelayService.Instance.JoinAllocationAsync(relayJoinCode);
+
+        while (!joinTask.IsCompleted)
+            yield return null;
+
+        if (joinTask.IsFaulted)
+        {
+            log.Write("Join Relay request failed");
+            yield break;
+        }
+
+        // Collect and convert the Relay data from the join response
+        var allocation = joinTask.Result;
+
+        // Format the server data, based on desired connectionType
+        var relayServerData = PlayerRelayData(allocation, "dtls");
+
+        yield return BindAndConnectToHost(relayServerData);
+    }
+    IEnumerator BindAndConnectToHost(RelayServerData relayServerData)
+    {
+        // Create the NetworkDriver using the Relay server data
+        var settings = new NetworkSettings();
+        settings.WithRelayParameters(serverData: ref relayServerData);
+        PlayerDriver = NetworkDriver.Create(settings);
+
+        // Bind the NetworkDriver to the available local endpoint.
+        // This will send the bind request to the Relay server
+        if (PlayerDriver.Bind(NetworkEndPoint.AnyIpv4) != 0)
+        {
+            log.Write("Client failed to bind");
+        }
+        else
+        {
+            while (!PlayerDriver.Bound)
+            {
+                PlayerDriver.ScheduleUpdate().Complete();
+                yield return null;
+            }
+
+            // Once the client is bound to the Relay server, you can send a connection request
+            clientConnection = PlayerDriver.Connect(relayServerData.Endpoint);
+            log.Write("Connected");
+        }
+    }
+    public void HostUpdate()
+    {
+        HostDriver.ScheduleUpdate().Complete();
+
+        // Clean up stale connections
+        for (int i = 0; i < serverConnections.Length; i++)
+        {
+            if (!serverConnections[i].IsCreated)
+            {
+                serverConnections.RemoveAtSwapBack(i);
+                --i;
+            }
+        }
+
+        //Accept incoming client connections
+        NetworkConnection incomingConnection;
+        while ((incomingConnection = HostDriver.Accept()) != default(NetworkConnection))
+        {
+            serverConnections.Add(incomingConnection);
+            Debug.Log("Accepted an incoming connection.");
+        }
+
+        //Process events from all connections
+        for (int i = 0; i < serverConnections.Length; i++)
+        {
+            Assert.IsTrue(serverConnections[i].IsCreated);
+
+            NetworkEvent.Type eventType;
+            while ((eventType = HostDriver.PopEventForConnection(serverConnections[i], out _)) != NetworkEvent.Type.Empty)
+            {
+                if (eventType == NetworkEvent.Type.Disconnect)
+                {
+                    Debug.Log("Client disconnected from server");
+                    serverConnections[i] = default(NetworkConnection);
+                }
+            }
+        }
+    }
+    public void ClientUpdate()
+    {
+        PlayerDriver.ScheduleUpdate().Complete();
+
+        //Resolve event queue
+        NetworkEvent.Type eventType;
+        while ((eventType = clientConnection.PopEvent(PlayerDriver, out _)) != NetworkEvent.Type.Empty)
+        {
+            if (eventType == NetworkEvent.Type.Connect)
+            {
+                Debug.Log("Client connected to the server");
+            }
+            else if (eventType == NetworkEvent.Type.Disconnect)
+            {
+                Debug.Log("Client got disconnected from server");
+                clientConnection = default(NetworkConnection);
+            }
+        }
+    }
     private void OnDestroy()
     {
         // We need to delete the lobby when we're not using it
@@ -236,76 +409,10 @@ public class LobbyManager : MonoBehaviour
         HostDriver.Dispose();
         PlayerDriver.Dispose();
     }
-    /// <summary>
-    /// RelayHostData represents the necessary informations
-    /// for a Host to host a game on a Relay
-    /// </summary>
-    public struct RelayHostData
-    {
-        public string JoinCode;
-        public string IPv4Address;
-        public ushort Port;
-        public Guid AllocationID;
-        public byte[] AllocationIDBytes;
-        public byte[] ConnectionData;
-        public byte[] Key;
-    }
 
-    /// <summary>
-    /// RelayHostData represents the necessary informations
-    /// for a Host to host a game on a Relay
-    /// </summary>
-    public struct RelayJoinData
-    {
-        public string JoinCode;
-        public string IPv4Address;
-        public ushort Port;
-        public Guid AllocationID;
-        public byte[] AllocationIDBytes;
-        public byte[] ConnectionData;
-        public byte[] HostConnectionData;
-        public byte[] Key;
-    }
 
-    public static RelayServerData HostRelayData(Allocation allocation, string connectionType = "udp")
-    {
-        // Select endpoint based on desired connectionType
-        var endpoint = GetEndpointForConnectionType(allocation.ServerEndpoints, connectionType);
-        if (endpoint == null)
-        {
-            throw new Exception($"endpoint for connectionType {connectionType} not found");
-        }
 
-        // Prepare the server endpoint using the Relay server IP and port
-        var serverEndpoint = NetworkEndPoint.Parse(endpoint.Host, (ushort)endpoint.Port);
-
-        // UTP uses pointers instead of managed arrays for performance reasons, so we use these helper functions to convert them
-        var allocationIdBytes = ConvertFromAllocationIdBytes(allocation.AllocationIdBytes);
-        var connectionData = ConvertConnectionData(allocation.ConnectionData);
-        var key = ConvertFromHMAC(allocation.Key);
-
-        // Prepare the Relay server data and compute the nonce value
-        // The host passes its connectionData twice into this function
-        var relayServerData = new RelayServerData(ref serverEndpoint, 0, ref allocationIdBytes, ref connectionData,
-            ref connectionData, ref key, connectionType == "dtls");
-        relayServerData.ComputeNewNonce();
-
-        return relayServerData;
-    }
-
-    private static RelayServerEndpoint GetEndpointForConnectionType(List<RelayServerEndpoint> endpoints, string connectionType)
-    {
-        foreach (var endpoint in endpoints)
-        {
-            if (endpoint.ConnectionType == connectionType)
-            {
-                return endpoint;
-            }
-        }
-
-        return null;
-    }
-
+    #region Utilities
     private static RelayAllocationId ConvertFromAllocationIdBytes(byte[] allocationIdBytes)
     {
         unsafe
@@ -338,84 +445,45 @@ public class LobbyManager : MonoBehaviour
             }
         }
     }
-
-    private async Task ServerBindAndListen(RelayNetworkParameter relayNetworkParameter)
+    private static RelayServerEndpoint GetEndpointForConnectionType(List<RelayServerEndpoint> endpoints, string connectionType)
     {
-        // Create the NetworkSettings with Relay parameters
-        var networkSettings = new NetworkSettings();
-        networkSettings.AddRawParameterStruct(ref relayNetworkParameter);
-
-        // Create the NetworkDriver using NetworkSettings
-        HostDriver = NetworkDriver.Create(networkSettings);
-
-        // Bind the NetworkDriver to the local endpoint
-        if (HostDriver.Bind(NetworkEndPoint.AnyIpv4) != 0)
+        foreach (var endpoint in endpoints)
         {
-            Debug.LogError("Server failed to bind");
-        }
-        else
-        {
-            // The binding process is an async operation; wait until bound
-            while (!HostDriver.Bound)
+            if (endpoint.ConnectionType == connectionType)
             {
-                HostDriver.ScheduleUpdate().Complete();
-                await WaitMiliseconds(1000);
-            }
-
-            // Once the driver is bound you can start listening for connection requests
-            if (HostDriver.Listen() != 0)
-            {
-                Debug.LogError("Server failed to listen");
-            }
-            else
-            {
-                isRelayServerConnected = true;
+                return endpoint;
             }
         }
 
-        Debug.Log("Server bound.");
+        return null;
+    }
+    public static RelayServerData HostRelayData(Allocation allocation, string connectionType = "dtls")
+    {
+        // Select endpoint based on desired connectionType
+        var endpoint = GetEndpointForConnectionType(allocation.ServerEndpoints, connectionType);
+        if (endpoint == null)
+        {
+            throw new Exception($"endpoint for connectionType {connectionType} not found");
+        }
+
+        // Prepare the server endpoint using the Relay server IP and port
+        var serverEndpoint = NetworkEndPoint.Parse(endpoint.Host, (ushort)endpoint.Port);
+
+        // UTP uses pointers instead of managed arrays for performance reasons, so we use these helper functions to convert them
+        var allocationIdBytes = ConvertFromAllocationIdBytes(allocation.AllocationIdBytes);
+        var connectionData = ConvertConnectionData(allocation.ConnectionData);
+        var key = ConvertFromHMAC(allocation.Key);
+
+        // Prepare the Relay server data and compute the nonce value
+        // The host passes its connectionData twice into this function
+        var relayServerData = new RelayServerData(ref serverEndpoint, 0, ref allocationIdBytes, ref connectionData,
+            ref connectionData, ref key, connectionType == "dtls");
+        relayServerData.ComputeNewNonce();
+
+        return relayServerData;
     }
 
-    private async Task ClientBindAndConnect(string relayJoinCode)
-    {
-        // Send the join request to the Relay service
-        joinAllocation = await RelayService.Instance.JoinAllocationAsync(relayJoinCode);
-        Debug.Log("Attempting to join allocation with join code...");
-
-        playerAllocationId = joinAllocation.AllocationId;
-        Debug.Log($"Player allocated with allocation Id: {playerAllocationId}");
-
-        // Format the server data, based on desired connectionType
-        var relayServerData = PlayerRelayData(joinAllocation, "udp");
-        var relayNetworkParameter = new RelayNetworkParameter { ServerData = relayServerData };
-
-        // Create the NetworkSettings with Relay parameters
-        var networkSettings = new NetworkSettings();
-        networkSettings.AddRawParameterStruct(ref relayNetworkParameter);
-
-        // Create the NetworkDriver using the Relay parameters
-        PlayerDriver = NetworkDriver.Create(networkSettings);
-
-        // Bind the NetworkDriver to the available local endpoint.
-        // This will send the bind request to the Relay server
-        if (PlayerDriver.Bind(NetworkEndPoint.AnyIpv4) != 0)
-        {
-            Debug.LogError("Client failed to bind");
-        }
-        else
-        {
-            while (!PlayerDriver.Bound)
-            {
-                PlayerDriver.ScheduleUpdate().Complete();
-                await WaitMiliseconds(1);
-            }
-
-            // Once the client is bound to the Relay server, you can send a connection request
-            clientConnection = PlayerDriver.Connect(relayNetworkParameter.ServerData.Endpoint);
-        }
-    }
-
-    public static RelayServerData PlayerRelayData(JoinAllocation allocation, string connectionType = "udp")
+    public static RelayServerData PlayerRelayData(JoinAllocation allocation, string connectionType = "dtls")
     {
         // Select endpoint based on desired connectionType
         var endpoint = GetEndpointForConnectionType(allocation.ServerEndpoints, connectionType);
@@ -441,10 +509,5 @@ public class LobbyManager : MonoBehaviour
 
         return relayServerData;
     }
-
-
-    async Task WaitMiliseconds(int time)
-    {
-        await Task.Delay(time);
-    }
+    #endregion
 }
