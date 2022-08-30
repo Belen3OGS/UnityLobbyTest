@@ -158,6 +158,7 @@ MonoBehaviour:
   debugText: {fileID: 1193038065}
   maxPlayers: 8
   isPrivate: 0
+  JoinCode: 
 --- !u!4 &384270270
 Transform:
   m_ObjectHideFlags: 0
@@ -218,7 +219,7 @@ MonoBehaviour:
   autoStartServerBuild: 1
   serverTickRate: 30
   offlineScene: 
-  onlineScene: 
+  onlineScene: Assets/Mirror/Examples/Room/Scenes/OnlineScene.unity
   transport: {fileID: 384270271}
   networkAddress: localhost
   maxConnections: 100
@@ -312,7 +313,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 384270269}
         m_TargetAssemblyTypeName: LobbyManager, Assembly-CSharp
-        m_MethodName: JoinLobby
+        m_MethodName: JoinButton
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -737,7 +738,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 384270269}
         m_TargetAssemblyTypeName: LobbyManager, Assembly-CSharp
-        m_MethodName: CreateLobby
+        m_MethodName: CreateButton
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

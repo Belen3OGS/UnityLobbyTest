@@ -13,6 +13,7 @@ public class Log
     public void Write(string st)
     {
         _text.text = st;
+        Debug.Log(st);
     }
 
 }
