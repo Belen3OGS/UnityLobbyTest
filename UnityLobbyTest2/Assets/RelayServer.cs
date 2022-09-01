@@ -19,8 +19,6 @@ public class RelayServer : MonoBehaviour
 
     public async Task InitHost(int maxPlayers)
     {
-        this.maxPlayers = maxPlayers;
-
         UILogManager.log.Write("Creating Relay Object");
 
         Allocation allocation = await RelayService.Instance.CreateAllocationAsync(maxPlayers);
