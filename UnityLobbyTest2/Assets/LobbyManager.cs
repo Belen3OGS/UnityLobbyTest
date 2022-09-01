@@ -112,7 +112,10 @@ public class LobbyManager : MonoBehaviour
         while (!initRelay.IsCompleted)
             yield return null;
         if (initRelay.IsFaulted)
+        {
             Debug.LogError("Failed to start Relay Server!!");
+            yield break;
+        }
 
         UILogManager.log.Write("Creating a Lobby");
 
