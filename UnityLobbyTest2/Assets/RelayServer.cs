@@ -84,8 +84,19 @@ public class RelayServer : MonoBehaviour
             {
                 if (eventType == NetworkEvent.Type.Disconnect)
                 {
+                    //TODO: map to disconnect from mirror
                     UILogManager.log.Write("Client disconnected from server");
                     connections[i] = default(NetworkConnection);
+                }
+
+                if(eventType == NetworkEvent.Type.Connect)
+                {
+                    //TODO: map to Mirror connection
+                }
+
+                if (eventType == NetworkEvent.Type.Data)
+                {
+                    //TODO: map to Mirror events
                 }
             }
         }
