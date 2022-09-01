@@ -5,17 +5,17 @@ using Unity.Services.Relay;
 using System.Threading.Tasks;
 using System;
 using Unity.Networking.Transport;
+using Unity.Collections;
 
 public class RelayServer : MonoBehaviour
 {
-    NetworkDriver driver;
+    NetworkDriver serverDriver;
     public RelayHelper.RelayHostData hostData;
     RelayServerData relayServerData;
-    private int maxPlayers;
-
-    public bool isRelayServerConnected { get; private set; }
-    public JoinAllocation joinAllocation { get; private set; }
-    public Guid playerAllocationId { get; private set; }
+    public bool IsRelayServerConnected { get; private set; }
+    public JoinAllocation JoinAllocation { get; private set; }
+    public Guid PlayerAllocationId { get; private set; }
+    private NativeList<NetworkConnection> connections;
 
     public async Task InitHost(int maxPlayers)
     {
@@ -52,32 +52,42 @@ public class RelayServer : MonoBehaviour
         networkSettings.WithRelayParameters(serverData: ref relayNetworkParameter);
 
         // Create the NetworkDriver using NetworkSettings
-        driver = NetworkDriver.Create(networkSettings);
+        serverDriver = NetworkDriver.Create(networkSettings);
 
         // Bind the NetworkDriver to the local endpoint
-        if (driver.Bind(NetworkEndPoint.AnyIpv4) != 0)
+        if (serverDriver.Bind(NetworkEndPoint.AnyIpv4) != 0)
         {
             UILogManager.log.Write("Server failed to bind");
         }
         else
         {
             // The binding process is an async operation; wait until bound
-            while (!driver.Bound)
+            while (!serverDriver.Bound)
             {
-                driver.ScheduleUpdate().Complete();
+                serverDriver.ScheduleUpdate().Complete();
                 await Task.Delay(10);
             }
 
             // Once the driver is bound you can start listening for connection requests
-            if (driver.Listen() != 0)
+            if (serverDriver.Listen() != 0)
             {
                 UILogManager.log.Write("Server failed to listen");
             }
             else
             {
-                isRelayServerConnected = true;
+                IsRelayServerConnected = true;
             }
         }
         UILogManager.log.Write("Server bound.");
+    }
+
+    private void OnDestroy()
+    {
+        Dispose();
+    }
+
+    public void Dispose()
+    {
+        serverDriver.Dispose();
     }
 }

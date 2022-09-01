@@ -9,7 +9,7 @@ public class UTPClient : MonoBehaviour
     private void Start()
     {
         driver = NetworkDriver.Create();
-        NetworkEndPoint endpoint = NetworkEndPoint.TryParse();
+        //NetworkEndPoint endpoint = NetworkEndPoint.TryParse();
     }
 
     private void Update()

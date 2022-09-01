@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 using UnityEngine;
 using Unity.Services.Authentication;
 using Unity.Services.Core;
@@ -10,67 +8,119 @@ using Unity.Services.Lobbies;
 using Unity.Services.Lobbies.Models;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
-using Unity.Services.Relay.Models;
-using Unity.Services.Relay;
 using System.Collections;
-using Mirror;
-using Unity.Networking.Transport.Relay;
-using Unity.Networking.Transport;
 
 public class LobbyManager : MonoBehaviour
 {
     [SerializeField] InputField lobbyName;
-    [SerializeField] Text debugText;
     [SerializeField] int maxPlayers = 8;
     [SerializeField] bool isPrivate = false;
     [SerializeField] RelayServer relayServer;
     [SerializeField] RelayClient relayClient;
 
-
     private Lobby currentLobby;
-    private Log log;
-    private string lobbyID;
     private List<Lobby> currentLobbyList;
 
-    public NetworkDriver HostDriver;
-    public NetworkDriver PlayerDriver;
+    public bool IsRelayServerConnected { 
+        get { return relayServer.IsRelayServerConnected; }
+        private set { } 
+    }
 
-    public bool isRelayServerConnected { get; private set; }
+    private bool unityServicesInitialized = false;
     public Player loggedInPlayer { get; private set; }
     public Guid playerAllocationId { get; private set; }
-    public Unity.Networking.Transport.NetworkConnection clientConnection { get; private set; }
-   
+    public Unity.Networking.Transport.NetworkConnection clientConnection { get; private set; } //TODO: Borrar
 
-    // Start is called before the first frame update
+    #region Initialization
     void Start()
     {
-        UILogManager.log = new Log(debugText);
+        DontDestroyOnLoad(this);
+        DontDestroyOnLoad(relayClient);
+        DontDestroyOnLoad(relayServer);
+        InitializeUnityServices();
     }
 
-    // Update is called once per frame
-    void Update()
+    public bool IsUnityServicesInitialized()
     {
-
+        if (!unityServicesInitialized)
+        {
+            Debug.LogError("Unity Services have not been initialized!!!");
+            return false;
+        }
+        else
+            return true;
     }
 
-    //Button Functions+
-
-
-
-    public async void CreateLobby()
+    private IEnumerator InitializeUnityServices()
     {
-        // Log in a player for this game client
-        loggedInPlayer = await GetPlayerFromAnonymousLoginAsync();
+        //Initialize Unity Services
+        var initTask = UnityServices.InitializeAsync();
+        while (!initTask.IsCompleted)
+        {
+            yield return null;
+        }
+        if (initTask.IsFaulted)
+        {
+            UILogManager.log.Write("Unity Services Initialization Failed");
+            Debug.LogError("Unity Services Initialization Failed");
+            yield break;
+        }
 
-        await relayServer.InitHost(maxPlayers);
+        //Log in player
+        var logInTask = GetPlayerFromAnonymousLoginAsync();
+        while (!logInTask.IsCompleted)
+        {
+            yield return null;
+        }
+        if (logInTask.IsFaulted)
+        {
+            UILogManager.log.Write("Failed Player Log-in");
+            Debug.LogError("Failed Player Log-in!");
+            yield break;
+        }
+        else
+            loggedInPlayer = logInTask.Result;
 
-        log.Write("Creating a Lobby");
+        unityServicesInitialized = true;
+    } 
+    #endregion
+
+    #region Button Functions
+    public void FindLobbysButton()
+    {
+        StartCoroutine(FindLobbys());
+    }
+
+    public void JoinButton()
+    {
+        StartCoroutine(JoinFirstLobby());
+    }
+
+    public void CreateLobbyButton()
+    {
+        StartCoroutine(CreateLobby());
+    }
+    #endregion
+
+    #region Lobby creation and joining
+    private IEnumerator CreateLobby()
+    {
+        if (IsUnityServicesInitialized())
+            yield break;
+
+        var initRelay = relayServer.InitHost(maxPlayers);
+        while (!initRelay.IsCompleted)
+            yield return null;
+        if (initRelay.IsFaulted)
+            Debug.LogError("Failed to start Relay Server!!");
+
+        UILogManager.log.Write("Creating a Lobby");
 
         // Add some data to our player
         // This data will be included in a lobby under players -> player.data
         loggedInPlayer.Data.Add("Ready", new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, "No"));
 
-        //Creating Lobby
+        //Creating Lobby Data
         var lobbyData = new Dictionary<string, DataObject>()
         {
             ["Test"] = new DataObject(DataObject.VisibilityOptions.Public, "true", DataObject.IndexOptions.S1),
@@ -81,7 +131,7 @@ public class LobbyManager : MonoBehaviour
         };
 
         // Create a new lobby
-        currentLobby = await LobbyService.Instance.CreateLobbyAsync(
+        var createLobby = LobbyService.Instance.CreateLobbyAsync(
             lobbyName: lobbyName.text,
             maxPlayers: maxPlayers,
             options: new CreateLobbyOptions()
@@ -90,23 +140,21 @@ public class LobbyManager : MonoBehaviour
                 IsPrivate = isPrivate,
                 Player = loggedInPlayer
             });
+        while (!createLobby.IsCompleted)
+            yield return null;
+        if (createLobby.IsFaulted)
+            Debug.LogError("Lobby Creation Failed!!");
+        UILogManager.log.Write("Created new lobby " + currentLobby.Name + " " + currentLobby.Id);
 
-        lobbyID = currentLobby.Id;
-
-        log.Write("Created new lobby " + currentLobby.Name + " " + currentLobby.Id);
-
-        StartCoroutine(HeartbeatLobbyCoroutine(lobbyID, 15));
-
+        StartCoroutine(HeartbeatLobbyCoroutine(currentLobby.Id, 15));
     }
 
-    public async void JoinLobby()
+    private IEnumerator FindLobbys()
     {
-        await UnityServices.InitializeAsync();
+        if (!IsUnityServicesInitialized())
+            yield break;
 
-        // Log in a player for this game client
-        Player loggedInPlayer = await GetPlayerFromAnonymousLoginAsync();
-
-        log.Write("Creating filters to join");
+        UILogManager.log.Write("Creating filters to join");
         List<QueryFilter> queryFilters = new List<QueryFilter>
         {
             // Let's search for games with open slots (AvailableSlots greater than 0)
@@ -114,8 +162,8 @@ public class LobbyManager : MonoBehaviour
                 field: QueryFilter.FieldOptions.AvailableSlots,
                 op: QueryFilter.OpOptions.GT,
                 value: "0"),
-            new QueryFilter(QueryFilter.FieldOptions.Name,lobbyName.text,QueryFilter.OpOptions.EQ) 
-            
+            new QueryFilter(QueryFilter.FieldOptions.Name,lobbyName.text,QueryFilter.OpOptions.EQ)
+
         };
         List<QueryOrder> queryOrdering = new List<QueryOrder>
         {
@@ -123,19 +171,37 @@ public class LobbyManager : MonoBehaviour
             new QueryOrder(false, QueryOrder.FieldOptions.Created),
             new QueryOrder(false, QueryOrder.FieldOptions.Name),
         };
-        QueryResponse response = await LobbyService.Instance.QueryLobbiesAsync(new QueryLobbiesOptions()
+
+        //Find Lobby Query
+        var findLobbyQuery = LobbyService.Instance.QueryLobbiesAsync(new QueryLobbiesOptions()
         {
             Count = 100, // Override default number of results to return
             Filters = queryFilters,
             Order = queryOrdering,
         });
+        while (!findLobbyQuery.IsCompleted)
+        {
+            yield return null;
+        }
+        if (findLobbyQuery.IsFaulted)
+        {
+            UILogManager.log.Write("Lobby list retrieval failed!");
+            Debug.LogError("Lobby list retrieval failed!");
+        }
+        QueryResponse response = findLobbyQuery.Result;
 
         currentLobbyList = new List<Lobby>();
         currentLobbyList = response.Results;
 
-        log.Write("Found " + currentLobbyList.Count + " results");
+        UILogManager.log.Write("Found " + currentLobbyList.Count + " results");
+    }
 
-        if (response.Results.Count > 0)
+    private IEnumerator JoinFirstLobby()
+    {
+        if (IsUnityServicesInitialized())
+            yield break;
+
+        if (currentLobbyList.Count > 0)
         {
             var joinLobbyTask = LobbyService.Instance.JoinLobbyByIdAsync(
                 lobbyId: currentLobbyList[0].Id,
@@ -145,48 +211,51 @@ public class LobbyManager : MonoBehaviour
                 });
             while (!joinLobbyTask.IsCompleted)
             {
-                await Task.Delay(10);
+                yield return null;
             }
-            if (joinLobbyTask.IsCompleted)
+            if (joinLobbyTask.IsFaulted)
             {
-                currentLobby = joinLobbyTask.Result;
-
-                log.Write("Joined lobby " + currentLobby.Name);
-
-                string joinCode = currentLobby.Data["JoinCode"].Value;
-
-                await relayClient.InitClient(joinCode);
+                UILogManager.log.Write("Join Lobby request failed");
+                yield break;
             }
+            currentLobby = joinLobbyTask.Result;
 
+            UILogManager.log.Write("Joined lobby " + currentLobby.Name);
+
+            string joinCode = currentLobby.Data["JoinCode"].Value;
+
+            UILogManager.log.Write("Join code is " + joinCode);
+
+            yield return relayClient.InitClient(joinCode);
         }
-
     }
+    #endregion
 
-    //Functions
-    async Task<Player> GetPlayerFromAnonymousLoginAsync()
+    #region Helper Functions
+    private async Task<Player> GetPlayerFromAnonymousLoginAsync()
     {
         if (!AuthenticationService.Instance.IsSignedIn)
         {
-            log.Write("Trying to log in a player ...");
+            UILogManager.log.Write("Trying to log in a player ...");
 
             // Use Unity Authentication to log in
             await AuthenticationService.Instance.SignInAnonymouslyAsync();
 
             if (!AuthenticationService.Instance.IsSignedIn)
             {
-                log.Write("Player was not signed in successfully; unable to continue without a logged in player");
+                UILogManager.log.Write("Player was not signed in successfully; unable to continue without a logged in player");
                 throw new InvalidOperationException("Player was not signed in successfully; unable to continue without a logged in player");
             }
         }
-        log.Write("Player signed in as " + AuthenticationService.Instance.PlayerId);
+        UILogManager.log.Write("Player signed in as " + AuthenticationService.Instance.PlayerId);
 
         // Player objects have Get-only properties, so you need to initialize the data bag here if you want to use it
         return new Player(AuthenticationService.Instance.PlayerId, null, new Dictionary<string, PlayerDataObject>());
     }
 
-    IEnumerator HeartbeatLobbyCoroutine(string lobbyId, float waitTimeSeconds)
+    private IEnumerator HeartbeatLobbyCoroutine(string lobbyId, float waitTimeSeconds)
     {
-        log.Write("Lobby Heartbeat");
+        UILogManager.log.Write("Lobby Heartbeat");
         var delay = new WaitForSecondsRealtime(waitTimeSeconds);
         while (true)
         {
@@ -194,13 +263,16 @@ public class LobbyManager : MonoBehaviour
             yield return delay;
         }
     }
+    #endregion
 
+    #region Disposal
     private void OnDestroy()
     {
         // We need to delete the lobby when we're not using it
-        Lobbies.Instance.DeleteLobbyAsync(lobbyID);
-        HostDriver.Dispose();
-        PlayerDriver.Dispose();
-    }
-
+        if (currentLobby != null)
+            Lobbies.Instance.DeleteLobbyAsync(currentLobby.Id);
+        relayServer.Dispose();
+        relayClient.Dispose();
+    } 
+    #endregion
 }
