@@ -20,7 +20,32 @@ public class RelayClient : MonoBehaviour
         UILogManager.log.Write("Join code is " + joinCode);
         yield return ClientBindAndConnect(joinCode);
     }
+    private void Update()
+    {
+        if (PlayerDriver.IsCreated && clientConnection.IsCreated)
+        {
+            ClientUpdate();
+        }
+    }
+    void ClientUpdate()
+    {
+        PlayerDriver.ScheduleUpdate().Complete();
 
+        //Resolve event queue
+        NetworkEvent.Type eventType;
+        while ((eventType = clientConnection.PopEvent(PlayerDriver, out _)) != NetworkEvent.Type.Empty)
+        {
+            if (eventType == NetworkEvent.Type.Connect)
+            {
+                UILogManager.log.Write("Client connected to the server");
+            }
+            else if (eventType == NetworkEvent.Type.Disconnect)
+            {
+                UILogManager.log.Write("Client got disconnected from server");
+                clientConnection = default(NetworkConnection);
+            }
+        }
+    }
     private IEnumerator ClientBindAndConnect(string relayJoinCode)
     {
         var joinTask = RelayService.Instance.JoinAllocationAsync(relayJoinCode);

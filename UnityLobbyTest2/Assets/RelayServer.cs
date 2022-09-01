@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System;
 using Unity.Networking.Transport;
 using Unity.Collections;
+using UnityEngine.Assertions;
 
 public class RelayServer : MonoBehaviour
 {
@@ -20,6 +21,8 @@ public class RelayServer : MonoBehaviour
     public async Task InitHost(int maxPlayers)
     {
         UILogManager.log.Write("Creating Relay Object");
+
+        connections = new NativeList<NetworkConnection>(16, Allocator.Persistent);
 
         Allocation allocation = await RelayService.Instance.CreateAllocationAsync(maxPlayers);
 
@@ -42,7 +45,51 @@ public class RelayServer : MonoBehaviour
 
         await ServerBindAndListenAsHostPlayer(relayServerData);
     }
+    private void Update()
+    {
+        if (serverDriver.IsCreated && IsRelayServerConnected)
+        {
+            HostUpdate();
+        }
+    }
+    void HostUpdate()
+    {
+        serverDriver.ScheduleUpdate().Complete();
 
+        // Clean up stale connections
+        for (int i = 0; i < connections.Length; i++)
+        {
+            if (!connections[i].IsCreated)
+            {
+                connections.RemoveAtSwapBack(i);
+                --i;
+            }
+        }
+
+        //Accept incoming client connections
+        NetworkConnection incomingConnection;
+        while ((incomingConnection = serverDriver.Accept()) != default(NetworkConnection))
+        {
+            connections.Add(incomingConnection);
+            UILogManager.log.Write("Accepted an incoming connection.");
+        }
+
+        //Process events from all connections
+        for (int i = 0; i < connections.Length; i++)
+        {
+            Assert.IsTrue(connections[i].IsCreated);
+
+            NetworkEvent.Type eventType;
+            while ((eventType = serverDriver.PopEventForConnection(connections[i], out _)) != NetworkEvent.Type.Empty)
+            {
+                if (eventType == NetworkEvent.Type.Disconnect)
+                {
+                    UILogManager.log.Write("Client disconnected from server");
+                    connections[i] = default(NetworkConnection);
+                }
+            }
+        }
+    }
     private async Task ServerBindAndListenAsHostPlayer(RelayServerData relayNetworkParameter)
     {
         // Create the NetworkSettings with Relay parameters
