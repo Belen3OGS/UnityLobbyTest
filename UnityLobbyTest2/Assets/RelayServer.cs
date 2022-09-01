@@ -78,14 +78,4 @@ public class RelayServer : MonoBehaviour
         }
         UILogManager.log.Write("Server bound.");
     }
-
-    private void OnDestroy()
-    {
-        Dispose();
-    }
-
-    public void Dispose()
-    {
-        serverDriver.Dispose();
-    }
 }

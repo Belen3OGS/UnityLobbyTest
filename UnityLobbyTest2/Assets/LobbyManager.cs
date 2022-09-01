@@ -37,7 +37,7 @@ public class LobbyManager : MonoBehaviour
         DontDestroyOnLoad(this);
         DontDestroyOnLoad(relayClient);
         DontDestroyOnLoad(relayServer);
-        InitializeUnityServices();
+        StartCoroutine(InitializeUnityServices());
     }
 
     public bool IsUnityServicesInitialized()
@@ -105,7 +105,7 @@ public class LobbyManager : MonoBehaviour
     #region Lobby creation and joining
     private IEnumerator CreateLobby()
     {
-        if (IsUnityServicesInitialized())
+        if (!IsUnityServicesInitialized())
             yield break;
 
         var initRelay = relayServer.InitHost(maxPlayers);
@@ -143,7 +143,12 @@ public class LobbyManager : MonoBehaviour
         while (!createLobby.IsCompleted)
             yield return null;
         if (createLobby.IsFaulted)
+        {
             Debug.LogError("Lobby Creation Failed!!");
+            yield break;
+        }
+        currentLobby = createLobby.Result;
+
         UILogManager.log.Write("Created new lobby " + currentLobby.Name + " " + currentLobby.Id);
 
         StartCoroutine(HeartbeatLobbyCoroutine(currentLobby.Id, 15));
@@ -198,7 +203,7 @@ public class LobbyManager : MonoBehaviour
 
     private IEnumerator JoinFirstLobby()
     {
-        if (IsUnityServicesInitialized())
+        if (!IsUnityServicesInitialized())
             yield break;
 
         if (currentLobbyList.Count > 0)
@@ -271,8 +276,8 @@ public class LobbyManager : MonoBehaviour
         // We need to delete the lobby when we're not using it
         if (currentLobby != null)
             Lobbies.Instance.DeleteLobbyAsync(currentLobby.Id);
-        relayServer.Dispose();
-        relayClient.Dispose();
+        //relayServer.Dispose();
+        //relayClient.Dispose();
     } 
     #endregion
 }

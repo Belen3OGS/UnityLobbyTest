@@ -87,13 +87,4 @@ public class RelayClient : MonoBehaviour
         };
 
     }
-
-    public void Dispose()
-    {
-        PlayerDriver.Dispose();
-    }
-    private void OnDestroy()
-    {
-        Dispose();
-    }
 }
