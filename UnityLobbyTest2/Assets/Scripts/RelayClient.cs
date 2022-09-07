@@ -13,6 +13,8 @@ public class RelayClient : MonoBehaviour
     public JoinAllocation JoinAllocation { get; private set; }
     public Guid PlayerAllocationId { get; private set; }
     public NetworkDriver PlayerDriver { get; private set; }
+    public bool connected { get; internal set; }
+
     private NetworkConnection clientConnection;
 
     public IEnumerator InitClient(string joinCode)
@@ -31,21 +33,52 @@ public class RelayClient : MonoBehaviour
     {
         PlayerDriver.ScheduleUpdate().Complete();
 
+        DataStreamReader stream;
+
         //Resolve event queue
         NetworkEvent.Type eventType;
-        while ((eventType = clientConnection.PopEvent(PlayerDriver, out _)) != NetworkEvent.Type.Empty)
+        while ((eventType = clientConnection.PopEvent(PlayerDriver, out stream)) != NetworkEvent.Type.Empty)
         {
             if (eventType == NetworkEvent.Type.Connect)
             {
                 UILogManager.log.Write("Client connected to the server");
+                Debug.Log("We are now connected to the server");
+            }
+            else if (eventType == NetworkEvent.Type.Data)
+            {
+                Debug.Log("I Received Data");
             }
             else if (eventType == NetworkEvent.Type.Disconnect)
             {
                 UILogManager.log.Write("Client got disconnected from server");
+                Debug.Log("Client disconnected from the server");
                 clientConnection = default(NetworkConnection);
             }
         }
     }
+
+    public void SendToServer(ArraySegment<byte> segment, int channelId)
+    {
+        DataStreamWriter writer;
+        PlayerDriver.BeginSend(clientConnection, out writer);
+        unsafe
+        {
+            byte* bytes = segment.Array;
+        }
+        writer.WriteBytes();
+
+    }
+
+    public void Shutdown()
+    {
+        PlayerDriver.Dispose();
+    }
+
+    private void OnDestroy()
+    {
+        Shutdown();
+    }
+
     private IEnumerator ClientBindAndConnect(string relayJoinCode)
     {
         var joinTask = RelayService.Instance.JoinAllocationAsync(relayJoinCode);
@@ -111,5 +144,6 @@ public class RelayClient : MonoBehaviour
             IPv4Address = JoinAllocation.RelayServer.IpV4
         };
 
+        connected = true;
     }
 }

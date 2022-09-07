@@ -10,9 +10,14 @@ using UnityEngine.Assertions;
 
 public class RelayServer : MonoBehaviour
 {
+    public UTPTransport UTPMirrorTransport;
+    
     NetworkDriver serverDriver;
     public RelayHelper.RelayHostData hostData;
     RelayServerData relayServerData;
+
+    public bool Active { get; private set;}
+
     public bool IsRelayServerConnected { get; private set; }
     public JoinAllocation JoinAllocation { get; private set; }
     public Guid PlayerAllocationId { get; private set; }
@@ -44,6 +49,8 @@ public class RelayServer : MonoBehaviour
         relayServerData = RelayHelper.HostRelayData(allocation, "udp");
 
         await ServerBindAndListenAsHostPlayer(relayServerData);
+
+        Active = true;
     }
     private void Update()
     {
@@ -72,6 +79,7 @@ public class RelayServer : MonoBehaviour
         {
             connections.Add(incomingConnection);
             UILogManager.log.Write("Accepted an incoming connection.");
+            UTPMirrorTransport.OnClientConnected.Invoke();
         }
 
         //Process events from all connections
@@ -87,6 +95,8 @@ public class RelayServer : MonoBehaviour
                     //TODO: map to disconnect from mirror
                     UILogManager.log.Write("Client disconnected from server");
                     connections[i] = default(NetworkConnection);
+                    UTPMirrorTransport.ServerDisconnect(i);
+                    UTPMirrorTransport.OnServerDisconnected.Invoke(i);
                 }
 
                 if(eventType == NetworkEvent.Type.Connect)
@@ -135,5 +145,18 @@ public class RelayServer : MonoBehaviour
             }
         }
         UILogManager.log.Write("Server bound.");
+    }
+
+    public void DisconnectPlayer(int i) 
+    {
+        connections.RemoveAtSwapBack(i);
+        connections[i] = default(NetworkConnection);
+        UTPMirrorTransport.OnServerDisconnected.Invoke(i);
+    }
+
+    public void Shutdown()
+    {
+        Active = false;
+        serverDriver.Dispose();
     }
 }
