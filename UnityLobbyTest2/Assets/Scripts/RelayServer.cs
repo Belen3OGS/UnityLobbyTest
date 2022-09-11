@@ -10,8 +10,10 @@ using UnityEngine.Assertions;
 
 public class RelayServer : MonoBehaviour
 {
-    public UTPTransport UTPMirrorTransport;
+    public UTPTransport transport;
     
+    [SerializeField] public int MaxPacketSize { get; private set; }
+
     NetworkDriver serverDriver;
     public RelayHelper.RelayHostData hostData;
     RelayServerData relayServerData;
@@ -22,8 +24,9 @@ public class RelayServer : MonoBehaviour
     public JoinAllocation JoinAllocation { get; private set; }
     public Guid PlayerAllocationId { get; private set; }
     private NativeList<NetworkConnection> connections;
+    public int maxPlayers;
 
-    public async Task InitHost(int maxPlayers)
+    public async Task InitHost()
     {
         UILogManager.log.Write("Creating Relay Object");
 
@@ -79,24 +82,26 @@ public class RelayServer : MonoBehaviour
         {
             connections.Add(incomingConnection);
             UILogManager.log.Write("Accepted an incoming connection.");
-            UTPMirrorTransport.OnClientConnected.Invoke();
+            transport.OnClientConnected.Invoke();
         }
 
         //Process events from all connections
         for (int i = 0; i < connections.Length; i++)
         {
+            DataStreamReader stream;
+
             Assert.IsTrue(connections[i].IsCreated);
 
             NetworkEvent.Type eventType;
-            while ((eventType = serverDriver.PopEventForConnection(connections[i], out _)) != NetworkEvent.Type.Empty)
+            while ((eventType = serverDriver.PopEventForConnection(connections[i], out stream)) != NetworkEvent.Type.Empty)
             {
                 if (eventType == NetworkEvent.Type.Disconnect)
                 {
                     //TODO: map to disconnect from mirror
                     UILogManager.log.Write("Client disconnected from server");
                     connections[i] = default(NetworkConnection);
-                    UTPMirrorTransport.ServerDisconnect(i);
-                    UTPMirrorTransport.OnServerDisconnected.Invoke(i);
+                    transport.ServerDisconnect(i);
+                    transport.OnServerDisconnected.Invoke(i);
                 }
 
                 if(eventType == NetworkEvent.Type.Connect)
@@ -104,13 +109,29 @@ public class RelayServer : MonoBehaviour
                     //TODO: map to Mirror connection
                 }
 
-                if (eventType == NetworkEvent.Type.Data)
+                else if (eventType == NetworkEvent.Type.Data)
                 {
-                    //TODO: map to Mirror events
+                    byte[] array = new byte[stream.Length];
+                    for (int j = 0; j < array.Length; j++)
+                    {
+                        array[j] = stream.ReadByte();
+                    }
+                    ArraySegment<byte> segment = new ArraySegment<byte>(array);
+                    transport.OnServerDataReceived.Invoke(i, segment, 0);
+                    Debug.Log("I Received Data");
                 }
             }
         }
     }
+    public void SendToClient(int i, ArraySegment<byte> segment, int channelId)
+    {
+        DataStreamWriter writer;
+        serverDriver.BeginSend(connections[i], out writer);
+        foreach (byte b in segment)
+            writer.WriteByte(b);
+        serverDriver.EndSend(writer);
+    }
+
     private async Task ServerBindAndListenAsHostPlayer(RelayServerData relayNetworkParameter)
     {
         // Create the NetworkSettings with Relay parameters
@@ -151,7 +172,7 @@ public class RelayServer : MonoBehaviour
     {
         connections.RemoveAtSwapBack(i);
         connections[i] = default(NetworkConnection);
-        UTPMirrorTransport.OnServerDisconnected.Invoke(i);
+        transport.OnServerDisconnected.Invoke(i);
     }
 
     public void Shutdown()

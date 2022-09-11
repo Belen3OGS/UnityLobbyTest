@@ -15,6 +15,8 @@ public class RelayClient : MonoBehaviour
     public NetworkDriver PlayerDriver { get; private set; }
     public bool connected { get; internal set; }
 
+    public UTPTransport transport;
+
     private NetworkConnection clientConnection;
 
     public IEnumerator InitClient(string joinCode)
@@ -44,15 +46,22 @@ public class RelayClient : MonoBehaviour
                 UILogManager.log.Write("Client connected to the server");
                 Debug.Log("We are now connected to the server");
             }
-            else if (eventType == NetworkEvent.Type.Data)
-            {
-                Debug.Log("I Received Data");
-            }
             else if (eventType == NetworkEvent.Type.Disconnect)
             {
                 UILogManager.log.Write("Client got disconnected from server");
                 Debug.Log("Client disconnected from the server");
                 clientConnection = default(NetworkConnection);
+            }
+            else if (eventType == NetworkEvent.Type.Data)
+            {
+                byte[] array = new byte[stream.Length];
+                for (int i=0; i < array.Length; i++)
+                {
+                    array[i] = stream.ReadByte();
+                }
+                ArraySegment<byte> segment = new ArraySegment<byte>(array);
+                transport.OnClientDataReceived.Invoke(segment, 0);
+                Debug.Log("I Received Data");
             }
         }
     }
@@ -61,12 +70,9 @@ public class RelayClient : MonoBehaviour
     {
         DataStreamWriter writer;
         PlayerDriver.BeginSend(clientConnection, out writer);
-        unsafe
-        {
-            byte* bytes = segment.Array;
-        }
-        writer.WriteBytes();
-
+        foreach (byte b in segment)
+            writer.WriteByte(b);
+        PlayerDriver.EndSend(writer);
     }
 
     public void Shutdown()

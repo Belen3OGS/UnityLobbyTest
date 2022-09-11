@@ -7,7 +7,6 @@ public class UTPTransport : Transport
     private static RelayClient _client;
     private static RelayServer _server;
 
-
     #region TransportMethods
     public override bool Available()
     {
@@ -21,7 +20,7 @@ public class UTPTransport : Transport
 
     public override bool ClientConnected()
     {
-        return _client != null && _client.connected;
+        return _client.connected;
     }
 
     public override void ClientDisconnect()
@@ -31,12 +30,12 @@ public class UTPTransport : Transport
 
     public override void ClientSend(ArraySegment<byte> segment, int channelId = 0)
     {
-        throw new NotImplementedException();
+        _client.SendToServer(segment, channelId);
     }
 
     public override int GetMaxPacketSize(int channelId = 0)
     {
-        throw new NotImplementedException();
+        return _server.MaxPacketSize;
     }
 
     public override bool ServerActive()
@@ -51,17 +50,17 @@ public class UTPTransport : Transport
 
     public override string ServerGetClientAddress(int connectionId)
     {
-        throw new NotImplementedException();
+       return connectionId.ToString();
     }
 
     public override void ServerSend(int connectionId, ArraySegment<byte> segment, int channelId = 0)
     {
-        throw new NotImplementedException();
+        _server.SendToClient(connectionId, segment, channelId);
     }
 
     public override void ServerStart()
     {
-        _server.InitHost(4);
+        _server.InitHost();
     }
 
     public override void ServerStop()

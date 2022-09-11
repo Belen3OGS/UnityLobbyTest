@@ -13,7 +13,7 @@ using System.Collections;
 public class LobbyManager : MonoBehaviour
 {
     [SerializeField] InputField lobbyName;
-    [SerializeField] int maxPlayers = 8;
+    //[SerializeField] int maxPlayers = 8;
     [SerializeField] bool isPrivate = false;
     [SerializeField] RelayServer relayServer;
     [SerializeField] RelayClient relayClient;
@@ -108,7 +108,7 @@ public class LobbyManager : MonoBehaviour
         if (!IsUnityServicesInitialized())
             yield break;
 
-        var initRelay = relayServer.InitHost(maxPlayers);
+        var initRelay = relayServer.InitHost();
         while (!initRelay.IsCompleted)
             yield return null;
         if (initRelay.IsFaulted)
@@ -136,7 +136,7 @@ public class LobbyManager : MonoBehaviour
         // Create a new lobby
         var createLobby = LobbyService.Instance.CreateLobbyAsync(
             lobbyName: lobbyName.text,
-            maxPlayers: maxPlayers,
+            maxPlayers: relayServer.maxPlayers,
             options: new CreateLobbyOptions()
             {
                 Data = lobbyData,
