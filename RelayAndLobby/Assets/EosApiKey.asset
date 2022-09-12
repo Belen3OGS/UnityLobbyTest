@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2006c7a2843279e4598781ed39185dd0, type: 3}
+  m_Name: EosApiKey
+  m_EditorClassIdentifier: 
+  epicProductName: Belu123mm's Product
+  epicProductVersion: 0.0.2
+  epicProductId: 5a07243339394dc7b3a56db04daec106
+  epicSandboxId: 51a831eb6282457fbba5e7e91e3c7f60
+  epicDeploymentId: 53f1019423a1459c85cc20ca8f8d12e3
+  epicClientId: xyza7891OYhY4oZ0uMKHQ2ZoIfXKMfSR
+  epicClientSecret: p9SCoqo7W01ZiZEcB/J7km5naRG/vCfInvGdGsp/hkw
