@@ -201,12 +201,12 @@ MonoBehaviour:
   autoStartServerBuild: 1
   serverTickRate: 30
   offlineScene: Assets/Mirror/Examples/Room/Scenes/OfflineScene.unity
-  onlineScene: Assets/Mirror/Examples/Room/Scenes/OnlineScene.unity
+  onlineScene: Assets/Game/GameScene.unity
   transport: {fileID: 384270271}
   networkAddress: localhost
   maxConnections: 100
   authenticator: {fileID: 0}
-  playerPrefab: {fileID: 1480027675339556, guid: 21daf89214c6ee443ad6875b73083c60, type: 3}
+  playerPrefab: {fileID: 3705526643235996117, guid: 25b7293edaebe0f4cbdeb393c4a156f3, type: 3}
   autoCreatePlayer: 1
   playerSpawnMethod: 0
   spawnPrefabs: []
