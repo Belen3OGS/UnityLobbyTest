@@ -108,7 +108,7 @@ public class RelayServer : MonoBehaviour
 
                 if(eventType == NetworkEvent.Type.Connect)
                 {
-                    //TODO: map to Mirror connection
+                    transport.OnServerConnected?.Invoke(i);
                 }
 
                 else if (eventType == NetworkEvent.Type.Data)
