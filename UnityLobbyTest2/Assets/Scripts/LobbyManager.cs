@@ -9,6 +9,7 @@ using Unity.Services.Lobbies.Models;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
 using System.Collections;
+using Mirror;
 
 public class LobbyManager : MonoBehaviour
 {
@@ -17,6 +18,7 @@ public class LobbyManager : MonoBehaviour
     [SerializeField] bool isPrivate = false;
     [SerializeField] RelayServer relayServer;
     [SerializeField] RelayClient relayClient;
+    [SerializeField] NetworkManager mirrorManager;
 
     private Lobby currentLobby;
     private List<Lobby> currentLobbyList;
@@ -32,11 +34,19 @@ public class LobbyManager : MonoBehaviour
     public Unity.Networking.Transport.NetworkConnection clientConnection { get; private set; } //TODO: Borrar
 
     #region Initialization
-    void Start()
+
+    private void Awake()
     {
+
         DontDestroyOnLoad(this);
         DontDestroyOnLoad(relayClient);
         DontDestroyOnLoad(relayServer);
+
+        relayServer.OnServerCreated += OnRelayCreated;
+    }
+
+    void Start()
+    {
         StartCoroutine(InitializeUnityServices());
     }
 
@@ -107,16 +117,25 @@ public class LobbyManager : MonoBehaviour
     {
         if (!IsUnityServicesInitialized())
             yield break;
+        mirrorManager.StartHost();
 
-        var initRelay = relayServer.InitHost();
-        while (!initRelay.IsCompleted)
-            yield return null;
-        if (initRelay.IsFaulted)
-        {
-            Debug.LogError("Failed to start Relay Server!!");
-            yield break;
-        }
 
+        //while (!initRelay.IsCompleted)
+        //    yield return null;
+        //if (initRelay.IsFaulted)
+        //{
+        //    Debug.LogError("Failed to start Relay Server!!");
+        //    yield break;
+        //}
+    }
+
+    public void OnRelayCreated()
+    {
+        StartCoroutine(CreateLobbyInt());
+    }
+
+    public IEnumerator CreateLobbyInt()
+    {
         UILogManager.log.Write("Creating a Lobby");
 
         // Add some data to our player
@@ -132,6 +151,8 @@ public class LobbyManager : MonoBehaviour
             ["Rank"] = new DataObject(DataObject.VisibilityOptions.Public, Random.Range(1, 51).ToString()),
             ["JoinCode"] = new DataObject(DataObject.VisibilityOptions.Member, relayServer.hostData.JoinCode, DataObject.IndexOptions.S3),
         };
+
+        mirrorManager.networkAddress = relayServer.hostData.JoinCode;
 
         // Create a new lobby
         var createLobby = LobbyService.Instance.CreateLobbyAsync(
@@ -234,7 +255,10 @@ public class LobbyManager : MonoBehaviour
 
             UILogManager.log.Write("Join code is " + joinCode);
 
-            yield return relayClient.InitClient(joinCode);
+            mirrorManager.networkAddress = joinCode;
+            mirrorManager.StartClient();
+            
+            //yield return relayClient.InitClient(joinCode);
         }
     }
     #endregion

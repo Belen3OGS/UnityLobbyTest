@@ -4,8 +4,8 @@ using Mirror;
 
 public class UTPTransport : Transport
 {
-    private static RelayClient _client;
-    private static RelayServer _server;
+    [SerializeField] private RelayClient _client;
+    [SerializeField] private RelayServer _server;
 
     #region TransportMethods
     public override bool Available()
@@ -15,7 +15,8 @@ public class UTPTransport : Transport
 
     public override void ClientConnect(string address)
     {
-        _client.InitClient(address);
+        
+        StartCoroutine(_client.InitClient(address));
     }
 
     public override bool ClientConnected()

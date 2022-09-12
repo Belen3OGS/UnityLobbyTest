@@ -11,9 +11,10 @@ using UnityEngine.Assertions;
 public class RelayServer : MonoBehaviour
 {
     public UTPTransport transport;
-    
-    [SerializeField] public int MaxPacketSize { get; private set; }
+    public event Action OnServerCreated;
 
+
+    [SerializeField] public int MaxPacketSize;
     NetworkDriver serverDriver;
     public RelayHelper.RelayHostData hostData;
     RelayServerData relayServerData;
@@ -54,6 +55,8 @@ public class RelayServer : MonoBehaviour
         await ServerBindAndListenAsHostPlayer(relayServerData);
 
         Active = true;
+
+        OnServerCreated.Invoke();
     }
     private void Update()
     {
@@ -82,7 +85,6 @@ public class RelayServer : MonoBehaviour
         {
             connections.Add(incomingConnection);
             UILogManager.log.Write("Accepted an incoming connection.");
-            transport.OnClientConnected.Invoke();
         }
 
         //Process events from all connections

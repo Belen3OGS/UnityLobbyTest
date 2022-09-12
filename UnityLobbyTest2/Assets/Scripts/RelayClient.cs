@@ -45,6 +45,8 @@ public class RelayClient : MonoBehaviour
             {
                 UILogManager.log.Write("Client connected to the server");
                 Debug.Log("We are now connected to the server");
+                connected = true;
+                transport.OnClientConnected.Invoke();
             }
             else if (eventType == NetworkEvent.Type.Disconnect)
             {
@@ -149,7 +151,5 @@ public class RelayClient : MonoBehaviour
             HostConnectionData = JoinAllocation.HostConnectionData,
             IPv4Address = JoinAllocation.RelayServer.IpV4
         };
-
-        connected = true;
     }
 }

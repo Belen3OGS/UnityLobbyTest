@@ -134,6 +134,7 @@ GameObject:
   - component: {fileID: 384270270}
   - component: {fileID: 384270272}
   - component: {fileID: 384270271}
+  - component: {fileID: 384270269}
   m_Layer: 0
   m_Name: NetworkManager
   m_TagString: Untagged
@@ -141,6 +142,20 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &384270269
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 384270268}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6442dc8070ceb41f094e44de0bf87274, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  offsetX: 0
+  offsetY: 0
 --- !u!4 &384270270
 Transform:
   m_ObjectHideFlags: 0
@@ -164,26 +179,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 384270268}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6b0fecffa3f624585964b0d0eb21b18e, type: 3}
+  m_Script: {fileID: 11500000, guid: abb6531afacc2c742b0e917e0e6c9f66, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Port: 7777
-  DualMode: 1
-  NoDelay: 1
-  Interval: 10
-  Timeout: 10000
-  FastResend: 2
-  CongestionWindow: 0
-  SendWindowSize: 4096
-  ReceiveWindowSize: 4096
-  MaxRetransmit: 40
-  NonAlloc: 1
-  MaximizeSendReceiveBuffersToOSLimit: 1
-  ReliableMaxMessageSize: 298449
-  UnreliableMaxMessageSize: 1199
-  debugLog: 0
-  statisticsGUI: 0
-  statisticsLog: 0
+  _client: {fileID: 971888351}
+  _server: {fileID: 971888352}
 --- !u!114 &384270272
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -200,7 +200,7 @@ MonoBehaviour:
   runInBackground: 1
   autoStartServerBuild: 1
   serverTickRate: 30
-  offlineScene: 
+  offlineScene: Assets/Mirror/Examples/Room/Scenes/OfflineScene.unity
   onlineScene: Assets/Mirror/Examples/Room/Scenes/OnlineScene.unity
   transport: {fileID: 384270271}
   networkAddress: localhost
@@ -879,6 +879,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d466faaa66800824d9d89e3e264be102, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  transport: {fileID: 384270271}
 --- !u!114 &971888352
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -891,6 +892,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 82e6a8b52cf97ea45b3635bb48ceb082, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  transport: {fileID: 384270271}
+  MaxPacketSize: 500
+  maxPlayers: 4
 --- !u!4 &971888353
 Transform:
   m_ObjectHideFlags: 0
@@ -1762,10 +1766,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   lobbyName: {fileID: 717856087}
-  maxPlayers: 8
   isPrivate: 0
   relayServer: {fileID: 971888352}
   relayClient: {fileID: 971888351}
+  mirrorManager: {fileID: 384270272}
 --- !u!4 &1957832221
 Transform:
   m_ObjectHideFlags: 0

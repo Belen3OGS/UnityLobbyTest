@@ -10,6 +10,7 @@ namespace Assets
 
         void Awake()
         {
+            DontDestroyOnLoad(debugText.transform.parent.gameObject);
             UILogManager.log = new Log(debugText);
         }
     }
