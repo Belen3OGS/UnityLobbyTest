@@ -85,7 +85,7 @@ public class RelayServer : MonoBehaviour
         {
             connections.Add(incomingConnection);
             UILogManager.log.Write("Accepted an incoming connection.");
-            transport.OnServerConnected?.Invoke(incomingConnection.InternalId);
+            transport.OnServerConnected?.Invoke(incomingConnection.InternalId + 1);
         }
 
         //Process events from all connections
@@ -103,8 +103,7 @@ public class RelayServer : MonoBehaviour
                     //TODO: map to disconnect from mirror
                     UILogManager.log.Write("Client disconnected from server");
                     connections[i] = default(NetworkConnection);
-                    transport.ServerDisconnect(i);
-                    transport.OnServerDisconnected?.Invoke(i);
+                    transport.ServerDisconnect(i + 1);
                 }
 
                 if(eventType == NetworkEvent.Type.Connect)
@@ -119,7 +118,7 @@ public class RelayServer : MonoBehaviour
                         array[j] = stream.ReadByte();
                     }
                     ArraySegment<byte> segment = new ArraySegment<byte>(array);
-                    transport.OnServerDataReceived?.Invoke(i, segment, 0);
+                    transport.OnServerDataReceived?.Invoke(i + 1, segment, 0);
                     Debug.Log("I Received Data");
                 }
             }
@@ -128,7 +127,7 @@ public class RelayServer : MonoBehaviour
     public void SendToClient(int i, ArraySegment<byte> segment, int channelId)
     {
         DataStreamWriter writer;
-        serverDriver.BeginSend(connections[i], out writer);
+        serverDriver.BeginSend(connections[i-1], out writer);
         foreach (byte b in segment)
             writer.WriteByte(b);
         serverDriver.EndSend(writer);
@@ -174,7 +173,7 @@ public class RelayServer : MonoBehaviour
     public void DisconnectPlayer(int i) 
     {
         connections.RemoveAtSwapBack(i);
-        connections[i] = default(NetworkConnection);
+        connections[i - 1] = default(NetworkConnection);
         transport.OnServerDisconnected?.Invoke(i);
     }
 
