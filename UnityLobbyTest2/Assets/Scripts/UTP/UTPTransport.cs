@@ -26,7 +26,7 @@ public class UTPTransport : Transport
 
     public override void ClientDisconnect()
     {
-        _client.Shutdown();
+        _client.Disconnect();
     }
 
     public override void ClientSend(ArraySegment<byte> segment, int channelId = 0)
@@ -46,7 +46,7 @@ public class UTPTransport : Transport
 
     public override void ServerDisconnect(int connectionId)
     {
-        _server.Shutdown();
+        _server.DisconnectPlayer(connectionId);
     }
 
     public override string ServerGetClientAddress(int connectionId)

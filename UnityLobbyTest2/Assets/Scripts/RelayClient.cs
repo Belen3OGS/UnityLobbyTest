@@ -78,8 +78,14 @@ public class RelayClient : MonoBehaviour
         transport.OnClientDataSent?.Invoke(segment,0);
     }
 
+    public void Disconnect()
+    {
+        clientConnection.Disconnect(PlayerDriver);
+    }
+
     public void Shutdown()
     {
+        Disconnect();
         PlayerDriver.Dispose();
     }
 
