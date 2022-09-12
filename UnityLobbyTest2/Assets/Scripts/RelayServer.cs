@@ -85,7 +85,7 @@ public class RelayServer : MonoBehaviour
         {
             connections.Add(incomingConnection);
             UILogManager.log.Write("Accepted an incoming connection.");
-            transport.OnServerConnected?.Invoke(incomingConnection.InternalId());
+            transport.OnServerConnected?.Invoke(incomingConnection.InternalId);
         }
 
         //Process events from all connections
