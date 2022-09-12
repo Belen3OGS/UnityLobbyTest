@@ -56,7 +56,7 @@ public class TankController : NetworkBehaviour
             }
             isColorized = true;
         }
-        Debug.LogError(color);
+        //Debug.LogError(color);
         if (isLocalPlayer)
         {
             // shoot

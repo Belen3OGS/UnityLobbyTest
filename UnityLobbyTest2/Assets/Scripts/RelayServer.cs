@@ -56,7 +56,7 @@ public class RelayServer : MonoBehaviour
 
         Active = true;
 
-        OnServerCreated.Invoke();
+        OnServerCreated?.Invoke();
     }
     private void Update()
     {
@@ -103,7 +103,7 @@ public class RelayServer : MonoBehaviour
                     UILogManager.log.Write("Client disconnected from server");
                     connections[i] = default(NetworkConnection);
                     transport.ServerDisconnect(i);
-                    transport.OnServerDisconnected.Invoke(i);
+                    transport.OnServerDisconnected?.Invoke(i);
                 }
 
                 if(eventType == NetworkEvent.Type.Connect)
@@ -119,7 +119,7 @@ public class RelayServer : MonoBehaviour
                         array[j] = stream.ReadByte();
                     }
                     ArraySegment<byte> segment = new ArraySegment<byte>(array);
-                    transport.OnServerDataReceived.Invoke(i, segment, 0);
+                    transport.OnServerDataReceived?.Invoke(i, segment, 0);
                     Debug.Log("I Received Data");
                 }
             }
@@ -132,6 +132,7 @@ public class RelayServer : MonoBehaviour
         foreach (byte b in segment)
             writer.WriteByte(b);
         serverDriver.EndSend(writer);
+        transport.OnServerDataSent?.Invoke(i, segment, 0);
     }
 
     private async Task ServerBindAndListenAsHostPlayer(RelayServerData relayNetworkParameter)
@@ -174,7 +175,7 @@ public class RelayServer : MonoBehaviour
     {
         connections.RemoveAtSwapBack(i);
         connections[i] = default(NetworkConnection);
-        transport.OnServerDisconnected.Invoke(i);
+        transport.OnServerDisconnected?.Invoke(i);
     }
 
     public void Shutdown()

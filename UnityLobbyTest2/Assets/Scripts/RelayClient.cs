@@ -46,7 +46,7 @@ public class RelayClient : MonoBehaviour
                 UILogManager.log.Write("Client connected to the server");
                 Debug.Log("We are now connected to the server");
                 connected = true;
-                transport.OnClientConnected.Invoke();
+                transport.OnClientConnected?.Invoke();
             }
             else if (eventType == NetworkEvent.Type.Disconnect)
             {
@@ -62,7 +62,7 @@ public class RelayClient : MonoBehaviour
                     array[i] = stream.ReadByte();
                 }
                 ArraySegment<byte> segment = new ArraySegment<byte>(array);
-                transport.OnClientDataReceived.Invoke(segment, 0);
+                transport.OnClientDataReceived?.Invoke(segment, 0);
                 Debug.Log("I Received Data");
             }
         }
@@ -75,6 +75,7 @@ public class RelayClient : MonoBehaviour
         foreach (byte b in segment)
             writer.WriteByte(b);
         PlayerDriver.EndSend(writer);
+        transport.OnClientDataSent?.Invoke(segment,0);
     }
 
     public void Shutdown()
