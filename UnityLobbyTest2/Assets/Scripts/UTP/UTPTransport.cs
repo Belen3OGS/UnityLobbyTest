@@ -26,7 +26,7 @@ public class UTPTransport : Transport
 
     public override void ClientDisconnect()
     {
-        _client.Disconnect();
+        _client.Shutdown();
     }
 
     public override void ClientSend(ArraySegment<byte> segment, int channelId = 0)

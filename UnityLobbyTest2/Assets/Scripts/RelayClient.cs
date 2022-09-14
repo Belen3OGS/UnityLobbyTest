@@ -11,8 +11,7 @@ public class RelayClient : MonoBehaviour
     RelayServerData relayServerData;
     public RelayHelper.RelayJoinData joinData;
     public JoinAllocation JoinAllocation { get; private set; }
-    public Guid PlayerAllocationId { get; private set; }
-    public NetworkDriver PlayerDriver { get; private set; }
+    private NetworkDriver PlayerDriver;
     public bool connected { get; internal set; }
 
     public UTPTransport transport;
@@ -24,6 +23,7 @@ public class RelayClient : MonoBehaviour
         UILogManager.log.Write("Join code is " + joinCode);
         yield return ClientBindAndConnect(joinCode);
     }
+
     private void Update()
     {
         if (PlayerDriver.IsCreated && clientConnection.IsCreated)
@@ -31,6 +31,7 @@ public class RelayClient : MonoBehaviour
             ClientUpdate();
         }
     }
+
     void ClientUpdate()
     {
         PlayerDriver.ScheduleUpdate().Complete();
@@ -78,44 +79,24 @@ public class RelayClient : MonoBehaviour
         transport.OnClientDataSent?.Invoke(segment,0);
     }
 
-    public void Disconnect()
-    {
-        clientConnection.Disconnect(PlayerDriver);
-    }
-
-    public void Shutdown()
-    {
-        Disconnect();
-        PlayerDriver.Dispose();
-    }
-
-    private void OnDestroy()
-    {
-        Shutdown();
-    }
 
     private IEnumerator ClientBindAndConnect(string relayJoinCode)
     {
-        var joinTask = RelayService.Instance.JoinAllocationAsync(relayJoinCode);
+        // Send the join request to the Relay service
+        UILogManager.log.Write("Attempting to join allocation with join code... " + relayJoinCode);
 
+        var joinTask = RelayService.Instance.JoinAllocationAsync(relayJoinCode);
         while (!joinTask.IsCompleted)
             yield return null;
-
         if (joinTask.IsFaulted)
         {
             UILogManager.log.Write("Join Relay request failed");
             yield break;
         }
-
         // Collect and convert the Relay data from the join response
         JoinAllocation = joinTask.Result;
 
-
-        // Send the join request to the Relay service
-        UILogManager.log.Write("Attempting to join allocation with join code... " + relayJoinCode);
-
-        PlayerAllocationId = JoinAllocation.AllocationId;
-        UILogManager.log.Write($"Player allocated with allocation Id: {PlayerAllocationId}");
+        UILogManager.log.Write($"Player allocated with allocation Id: {JoinAllocation.AllocationId}");
 
         // Format the server data, based on desired connectionType
         relayServerData = RelayHelper.PlayerRelayData(JoinAllocation, "udp");
@@ -158,5 +139,20 @@ public class RelayClient : MonoBehaviour
             HostConnectionData = JoinAllocation.HostConnectionData,
             IPv4Address = JoinAllocation.RelayServer.IpV4
         };
+    }
+    
+    public void Shutdown()
+    {
+        if (connected)
+        {
+            clientConnection.Disconnect(PlayerDriver);
+            connected = false;
+            PlayerDriver.Dispose();
+        }
+    }
+
+    private void OnDestroy()
+    {
+        Shutdown();
     }
 }
