@@ -24,16 +24,12 @@ public class RelayClient : MonoBehaviour
         yield return ClientBindAndConnect(joinCode);
     }
 
-    private void Update()
+    public void ClientEarlyUpdate()
     {
-        if (PlayerDriver.IsCreated && clientConnection.IsCreated)
-        {
-            ClientUpdate();
-        }
-    }
-
-    void ClientUpdate()
-    {
+        //Debug.Log("ClientEarlyUpdate");
+        if (!(PlayerDriver.IsCreated && clientConnection.IsCreated))
+            return;
+        
         PlayerDriver.ScheduleUpdate().Complete();
 
         DataStreamReader stream;
@@ -69,8 +65,22 @@ public class RelayClient : MonoBehaviour
         }
     }
 
+    public void ClientLateUpdate()
+    {
+        //Debug.Log("ClientLateUpdate");
+        if (!(PlayerDriver.IsCreated && clientConnection.IsCreated))
+            return;
+    }
+
     public void SendToServer(ArraySegment<byte> segment, int channelId)
     {
+        if (!clientConnection.IsCreated)
+        {
+            Debug.LogError("Disconnected from the server");
+            return;
+        }
+
+
         DataStreamWriter writer;
         PlayerDriver.BeginSend(clientConnection, out writer);
         foreach (byte b in segment)

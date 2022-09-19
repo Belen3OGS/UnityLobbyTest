@@ -31,7 +31,7 @@ public class RelayServer : MonoBehaviour
     {
         UILogManager.log.Write("Creating Relay Object");
 
-        connections = new NativeList<NetworkConnection>(16, Allocator.Persistent);
+        connections = new NativeList<NetworkConnection>(maxPlayers, Allocator.Persistent);
 
         Allocation allocation = await RelayService.Instance.CreateAllocationAsync(maxPlayers);
 
@@ -58,26 +58,24 @@ public class RelayServer : MonoBehaviour
 
         OnServerCreated?.Invoke();
     }
-    private void Update()
+
+    public void HostEarlyUpdate()
     {
-        if (serverDriver.IsCreated && IsRelayServerConnected)
-        {
-            HostUpdate();
-        }
-    }
-    void HostUpdate()
-    {
+        //Debug.Log("ServerEarlyUpdate");
+        if (!(serverDriver.IsCreated && IsRelayServerConnected))
+            return;
+
         serverDriver.ScheduleUpdate().Complete();
 
         // Clean up stale connections
-        for (int i = 0; i < connections.Length; i++)
-        {
-            if (!connections[i].IsCreated)
-            {
-                connections.RemoveAtSwapBack(i);
-                --i;
-            }
-        }
+        //for (int i = 0; i < connections.Length; i++)
+        //{
+        //    if (!connections[i].IsCreated)
+        //    {
+        //        connections.RemoveAtSwapBack(i);
+        //        --i;
+        //    }
+        //}
 
         //Accept incoming client connections
         NetworkConnection incomingConnection;
@@ -93,39 +91,52 @@ public class RelayServer : MonoBehaviour
         {
             DataStreamReader stream;
 
-            Assert.IsTrue(connections[i].IsCreated);
-
-            NetworkEvent.Type eventType;
-            while ((eventType = serverDriver.PopEventForConnection(connections[i], out stream)) != NetworkEvent.Type.Empty)
+            if (connections[i].IsCreated)
             {
-                if (eventType == NetworkEvent.Type.Disconnect)
+                NetworkEvent.Type eventType;
+                while ((eventType = serverDriver.PopEventForConnection(connections[i], out stream)) != NetworkEvent.Type.Empty)
                 {
-                    //TODO: map to disconnect from mirror
-                    UILogManager.log.Write("Client disconnected from server");
-                    connections[i] = default(NetworkConnection);
-                    transport.ServerDisconnect(i + 1);
-                }
-
-                if(eventType == NetworkEvent.Type.Connect)
-                {
-                }
-
-                else if (eventType == NetworkEvent.Type.Data)
-                {
-                    byte[] array = new byte[stream.Length];
-                    for (int j = 0; j < array.Length; j++)
+                    if (eventType == NetworkEvent.Type.Disconnect)
                     {
-                        array[j] = stream.ReadByte();
+                        //TODO: map to disconnect from mirror
+                        DisconnectPlayer(i + 1);
+                        UILogManager.log.Write("Client disconnected from server");
                     }
-                    ArraySegment<byte> segment = new ArraySegment<byte>(array);
-                    transport.OnServerDataReceived?.Invoke(i + 1, segment, 0);
-                    Debug.Log("I Received Data");
+
+                    if(eventType == NetworkEvent.Type.Connect)
+                    {
+                    }
+
+                    else if (eventType == NetworkEvent.Type.Data)
+                    {
+                        byte[] array = new byte[stream.Length];
+                        for (int j = 0; j < array.Length; j++)
+                        {
+                            array[j] = stream.ReadByte();
+                        }
+                        ArraySegment<byte> segment = new ArraySegment<byte>(array);
+                        transport.OnServerDataReceived?.Invoke(i + 1, segment, 0);
+                    }
                 }
             }
+
         }
     }
+    public void HostLateUpdate()
+    {
+        //Debug.Log("ServerLateUpdate");
+        if (!(serverDriver.IsCreated && IsRelayServerConnected))
+            return;
+    }
+
     public void SendToClient(int i, ArraySegment<byte> segment, int channelId)
     {
+        if (!connections[i - 1].IsCreated)
+        {
+            Debug.LogError("Client already disconnected");
+            return;
+        }
+
         DataStreamWriter writer;
         serverDriver.BeginSend(connections[i-1], out writer);
         foreach (byte b in segment)
@@ -172,7 +183,6 @@ public class RelayServer : MonoBehaviour
 
     public void DisconnectPlayer(int i) 
     {
-        connections.RemoveAtSwapBack(i);
         connections[i - 1] = default(NetworkConnection);
         transport.OnServerDisconnected?.Invoke(i);
     }

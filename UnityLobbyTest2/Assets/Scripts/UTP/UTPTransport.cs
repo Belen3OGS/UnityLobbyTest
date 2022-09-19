@@ -7,6 +7,27 @@ public class UTPTransport : Transport
     [SerializeField] private RelayClient _client;
     [SerializeField] private RelayServer _server;
 
+    #region LoopMethods
+    public override void ServerEarlyUpdate()
+    {
+        _server.HostEarlyUpdate();
+    }
+    public override void ServerLateUpdate() 
+    {
+        _server.HostLateUpdate();
+    }
+
+    public override void ClientEarlyUpdate()
+    {
+        _client.ClientEarlyUpdate();
+    }
+    public override void ClientLateUpdate() 
+    {
+        _client.ClientLateUpdate();
+    }
+
+    #endregion
+
     #region TransportMethods
     public override bool Available()
     {
