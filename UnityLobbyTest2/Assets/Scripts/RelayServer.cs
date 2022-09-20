@@ -189,7 +189,9 @@ public class RelayServer : MonoBehaviour
 
     public void Shutdown()
     {
-        Active = false;
+        serverDriver.ScheduleUpdate().Complete();
         serverDriver.Dispose();
+        connections.Dispose();
+        Active = false;
     }
 }

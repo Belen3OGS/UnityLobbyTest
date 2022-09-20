@@ -14,35 +14,21 @@ using Mirror;
 public class LobbyManager : MonoBehaviour
 {
     [SerializeField] InputField lobbyName;
-    //[SerializeField] int maxPlayers = 8;
-    [SerializeField] bool isPrivate = false;
-    [SerializeField] RelayServer relayServer;
-    [SerializeField] RelayClient relayClient;
     [SerializeField] NetworkManager mirrorManager;
+    public event Action<string> OnLobbyJoined;
+    public event Action OnLobbyCreated;
+
+    public Player loggedInPlayer { get; private set; }
+    public Guid playerAllocationId { get; private set; }
 
     private Lobby currentLobby;
     private List<Lobby> currentLobbyList;
-
-    public bool IsRelayServerConnected { 
-        get { return relayServer.IsRelayServerConnected; }
-        private set { } 
-    }
-
     private bool unityServicesInitialized = false;
-    public Player loggedInPlayer { get; private set; }
-    public Guid playerAllocationId { get; private set; }
-    public Unity.Networking.Transport.NetworkConnection clientConnection { get; private set; } //TODO: Borrar
 
     #region Initialization
-
     private void Awake()
     {
-
         DontDestroyOnLoad(this);
-        DontDestroyOnLoad(relayClient);
-        DontDestroyOnLoad(relayServer);
-
-        relayServer.OnServerCreated += OnRelayCreated;
     }
 
     void Start()
@@ -100,42 +86,16 @@ public class LobbyManager : MonoBehaviour
     {
         StartCoroutine(FindLobbys());
     }
-
-    public void JoinButton()
-    {
-        StartCoroutine(JoinFirstLobby());
-    }
-
-    public void CreateLobbyButton()
-    {
-        StartCoroutine(CreateLobby());
-    }
     #endregion
 
     #region Lobby creation and joining
-    private IEnumerator CreateLobby()
+    public IEnumerator CreateLobby(string address, int maxPlayers, bool isPrivate = false)
     {
         if (!IsUnityServicesInitialized())
+        {
             yield break;
-        mirrorManager.StartHost();
+        }
 
-
-        //while (!initRelay.IsCompleted)
-        //    yield return null;
-        //if (initRelay.IsFaulted)
-        //{
-        //    Debug.LogError("Failed to start Relay Server!!");
-        //    yield break;
-        //}
-    }
-
-    public void OnRelayCreated()
-    {
-        StartCoroutine(CreateLobbyInt());
-    }
-
-    public IEnumerator CreateLobbyInt()
-    {
         UILogManager.log.Write("Creating a Lobby");
 
         // Add some data to our player
@@ -149,15 +109,13 @@ public class LobbyManager : MonoBehaviour
             ["GameMode"] = new DataObject(DataObject.VisibilityOptions.Public, "ctf", DataObject.IndexOptions.S2),
             ["Skill"] = new DataObject(DataObject.VisibilityOptions.Public, Random.Range(1, 51).ToString(), DataObject.IndexOptions.N1),
             ["Rank"] = new DataObject(DataObject.VisibilityOptions.Public, Random.Range(1, 51).ToString()),
-            ["JoinCode"] = new DataObject(DataObject.VisibilityOptions.Member, relayServer.hostData.JoinCode, DataObject.IndexOptions.S3),
+            ["Address"] = new DataObject(DataObject.VisibilityOptions.Member, address, DataObject.IndexOptions.S3),
         };
-
-        mirrorManager.networkAddress = relayServer.hostData.JoinCode;
 
         // Create a new lobby
         var createLobby = LobbyService.Instance.CreateLobbyAsync(
             lobbyName: lobbyName.text,
-            maxPlayers: relayServer.maxPlayers,
+            maxPlayers: maxPlayers,
             options: new CreateLobbyOptions()
             {
                 Data = lobbyData,
@@ -219,7 +177,6 @@ public class LobbyManager : MonoBehaviour
         }
         QueryResponse response = findLobbyQuery.Result;
 
-        currentLobbyList = new List<Lobby>();
         currentLobbyList = response.Results;
 
         UILogManager.log.Write("Found " + currentLobbyList.Count + " results");
@@ -251,7 +208,7 @@ public class LobbyManager : MonoBehaviour
 
             UILogManager.log.Write("Joined lobby " + currentLobby.Name);
 
-            string joinCode = currentLobby.Data["JoinCode"].Value;
+            string joinCode = currentLobby.Data["Address"].Value;
 
             UILogManager.log.Write("Join code is " + joinCode);
 
@@ -303,8 +260,16 @@ public class LobbyManager : MonoBehaviour
         // We need to delete the lobby when we're not using it
         if (currentLobby != null)
             Lobbies.Instance.DeleteLobbyAsync(currentLobby.Id);
-        //relayServer.Dispose();
-        //relayClient.Dispose();
     } 
+
+    public void DisconnectFromLobby()
+    {
+        LobbyService.Instance.RemovePlayerAsync(currentLobby.Id, loggedInPlayer.Id);
+    }
+    public void StopLobby()
+    {
+        Lobbies.Instance.DeleteLobbyAsync(currentLobby.Id);
+    }
+
     #endregion
 }

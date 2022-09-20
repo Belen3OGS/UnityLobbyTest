@@ -155,9 +155,10 @@ public class RelayClient : MonoBehaviour
     {
         if (connected)
         {
+            PlayerDriver.ScheduleUpdate().Complete();
             clientConnection.Disconnect(PlayerDriver);
-            connected = false;
             PlayerDriver.Dispose();
+            connected = false;
         }
     }
 

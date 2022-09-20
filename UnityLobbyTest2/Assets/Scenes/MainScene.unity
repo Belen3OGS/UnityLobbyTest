@@ -132,7 +132,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 384270270}
-  - component: {fileID: 384270272}
   - component: {fileID: 384270271}
   - component: {fileID: 384270269}
   m_Layer: 0
@@ -151,11 +150,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 384270268}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6442dc8070ceb41f094e44de0bf87274, type: 3}
+  m_Script: {fileID: 11500000, guid: abb6531afacc2c742b0e917e0e6c9f66, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  offsetX: 0
-  offsetY: 0
+  _client: {fileID: 971888351}
+  _server: {fileID: 971888352}
 --- !u!4 &384270270
 Transform:
   m_ObjectHideFlags: 0
@@ -179,21 +178,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 384270268}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: abb6531afacc2c742b0e917e0e6c9f66, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _client: {fileID: 971888351}
-  _server: {fileID: 971888352}
---- !u!114 &384270272
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 384270268}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8aab4c8111b7c411b9b92cf3dbc5bd4e, type: 3}
+  m_Script: {fileID: 11500000, guid: 761781867cd5f574e95be71776dff9c0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   dontDestroyOnLoad: 1
@@ -202,7 +187,7 @@ MonoBehaviour:
   serverTickRate: 30
   offlineScene: Assets/Scenes/MainScene.unity
   onlineScene: Assets/Game/GameScene.unity
-  transport: {fileID: 384270271}
+  transport: {fileID: 384270269}
   networkAddress: localhost
   maxConnections: 4
   authenticator: {fileID: 0}
@@ -210,6 +195,8 @@ MonoBehaviour:
   autoCreatePlayer: 1
   playerSpawnMethod: 0
   spawnPrefabs: []
+  lobbyManager: {fileID: 1957832220}
+  privateServer: 0
 --- !u!1 &409710520
 GameObject:
   m_ObjectHideFlags: 0
@@ -879,7 +866,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d466faaa66800824d9d89e3e264be102, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  transport: {fileID: 384270271}
+  transport: {fileID: 0}
 --- !u!114 &971888352
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -892,7 +879,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 82e6a8b52cf97ea45b3635bb48ceb082, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  transport: {fileID: 384270271}
+  transport: {fileID: 0}
   MaxPacketSize: 500
   maxPlayers: 4
 --- !u!4 &971888353
@@ -1766,10 +1753,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   lobbyName: {fileID: 717856087}
-  isPrivate: 0
-  relayServer: {fileID: 971888352}
-  relayClient: {fileID: 971888351}
-  mirrorManager: {fileID: 384270272}
+  mirrorManager: {fileID: 0}
 --- !u!4 &1957832221
 Transform:
   m_ObjectHideFlags: 0
