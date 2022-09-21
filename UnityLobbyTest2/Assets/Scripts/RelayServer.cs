@@ -7,19 +7,18 @@ using System;
 using Unity.Networking.Transport;
 using Unity.Collections;
 using UnityEngine.Assertions;
+using System.Collections;
 
 public class RelayServer : MonoBehaviour
 {
     public UTPTransport transport;
-    public event Action OnServerCreated;
-
 
     [SerializeField] public int MaxPacketSize;
     NetworkDriver serverDriver;
     public RelayHelper.RelayHostData hostData;
     RelayServerData relayServerData;
 
-    public bool Active { get; private set;}
+    public event Action<string> OnServerReady;
 
     public bool IsRelayServerConnected { get; private set; }
     public JoinAllocation JoinAllocation { get; private set; }
@@ -27,13 +26,21 @@ public class RelayServer : MonoBehaviour
     private NativeList<NetworkConnection> connections;
     public int maxPlayers;
 
-    public async Task InitHost()
+    public IEnumerator InitHost()
     {
         UILogManager.log.Write("Creating Relay Object");
 
         connections = new NativeList<NetworkConnection>(maxPlayers, Allocator.Persistent);
 
-        Allocation allocation = await RelayService.Instance.CreateAllocationAsync(maxPlayers);
+        var createAllocationTask =RelayService.Instance.CreateAllocationAsync(maxPlayers);
+        while(!createAllocationTask.IsCompleted)
+            yield return null;
+        if (createAllocationTask.IsFaulted)
+        {
+            Debug.LogError("Could not create Relay server Allocation");
+            yield break;
+        }
+        Allocation allocation = createAllocationTask.Result;
 
         Debug.Log("Alocation: " + allocation);
 
@@ -47,16 +54,32 @@ public class RelayServer : MonoBehaviour
             IPv4Address = allocation.RelayServer.IpV4
         };
 
+        var getJoinCodeTask = RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
+        while (!getJoinCodeTask.IsCompleted)
+            yield return null;
+        if (getJoinCodeTask.IsFaulted)
+        {
+            Debug.LogError("Could not obtain Relay server Join Code");
+            yield break;
+        }
         // Retrieve JoinCode, with this you can join later
-        hostData.JoinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
+        hostData.JoinCode = getJoinCodeTask.Result;
 
         relayServerData = RelayHelper.HostRelayData(allocation, "udp");
 
-        await ServerBindAndListenAsHostPlayer(relayServerData);
+        var serverBindAsHotTask = ServerBindAndListenAsHostPlayer(relayServerData);
+        while (!serverBindAsHotTask.IsCompleted)
+            yield return null;
+        if (serverBindAsHotTask.IsFaulted)
+        {
+            Debug.LogError("Failed to Bind to Server as Host");
+            yield break;
+        }
 
-        Active = true;
+        IsRelayServerConnected = true;
 
-        OnServerCreated?.Invoke();
+        Debug.Log("RELAY READY!!");
+        OnServerReady?.Invoke(hostData.JoinCode);
     }
 
     public void HostEarlyUpdate()
@@ -192,6 +215,6 @@ public class RelayServer : MonoBehaviour
         serverDriver.ScheduleUpdate().Complete();
         serverDriver.Dispose();
         connections.Dispose();
-        Active = false;
+        IsRelayServerConnected = false;
     }
 }

@@ -86,6 +86,11 @@ public class LobbyManager : MonoBehaviour
     {
         StartCoroutine(FindLobbys());
     }
+
+    public void JoinLobbyButton()
+    {
+        StartCoroutine(JoinFirstLobby());
+    }
     #endregion
 
     #region Lobby creation and joining
@@ -211,10 +216,6 @@ public class LobbyManager : MonoBehaviour
             string joinCode = currentLobby.Data["Address"].Value;
 
             UILogManager.log.Write("Join code is " + joinCode);
-
-            mirrorManager.networkAddress = joinCode;
-            mirrorManager.StartClient();
-            
             //yield return relayClient.InitClient(joinCode);
         }
     }

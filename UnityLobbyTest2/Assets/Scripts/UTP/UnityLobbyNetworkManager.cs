@@ -1,4 +1,5 @@
 ﻿using Mirror;
+using System;
 using UnityEngine;
 
 public class UnityLobbyNetworkManager : NetworkManager
@@ -10,6 +11,11 @@ public class UnityLobbyNetworkManager : NetworkManager
     {
         base.Start();
         lobbyManager.OnLobbyJoined += OnLobbyJoined;
+    }
+
+    public override void OnServerReady(NetworkConnectionToClient conn)
+    {
+        base.OnServerReady(conn);
     }
 
     public override void OnStartClient()
@@ -34,10 +40,24 @@ public class UnityLobbyNetworkManager : NetworkManager
         lobbyManager.StopLobby();
     }
 
+    public override void OnServerConnect(NetworkConnectionToClient conn)
+    {
+        base.OnServerConnect(conn);
+    }
+
     public override void OnStartHost()
     {
         base.OnStartHost();
-        lobbyManager.CreateLobby(networkAddress, maxConnections, privateServer);
+        if (!networkAddress.Equals("localhost"))
+        {
+            Uri uri = transport.ServerUri();
+            if (uri != null)
+                networkAddress = uri.Host;
+            else
+                Debug.LogError("URI was null");
+            StartCoroutine(lobbyManager.CreateLobby(networkAddress, maxConnections, privateServer));
+            Debug.Log("SERVER DOUBLE READY!!!!!!!!");
+        }
     }
 
     private void OnLobbyJoined(string joinCode)
@@ -45,4 +65,6 @@ public class UnityLobbyNetworkManager : NetworkManager
         networkAddress = joinCode;
         StartClient();
     }
+
+
 }

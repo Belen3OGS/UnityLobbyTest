@@ -6,6 +6,12 @@ public class UTPTransport : Transport
 {
     [SerializeField] private RelayClient _client;
     [SerializeField] private RelayServer _server;
+    [HideInInspector] public string joinCode;
+
+    private void Awake()
+    {
+        _server.OnServerReady += OnRelayServerReady;
+    }
 
     #region LoopMethods
     public override void ServerEarlyUpdate()
@@ -62,7 +68,7 @@ public class UTPTransport : Transport
 
     public override bool ServerActive()
     {
-        return _server.Active;
+        return _server.IsRelayServerConnected;
     }
 
     public override void ServerDisconnect(int connectionId)
@@ -82,7 +88,7 @@ public class UTPTransport : Transport
 
     public override void ServerStart()
     {
-        _server.InitHost();
+        StartCoroutine(_server.InitHost());
     }
 
     public override void ServerStop()
@@ -92,7 +98,9 @@ public class UTPTransport : Transport
 
     public override Uri ServerUri()
     {
-        throw new NotImplementedException();
+        if (_server.IsRelayServerConnected)
+            return new Uri.;
+        else return null;
     }
 
     public override void Shutdown()
@@ -107,6 +115,10 @@ public class UTPTransport : Transport
 
     #region CustomMethods
     //CUSTOM METHODS
-
+    private void OnRelayServerReady(string joinCode)
+    {
+        NetworkManager.singleton.networkAddress = joinCode;
+        NetworkManager.singleton.OnStartHost();
+    }
     #endregion
 }
