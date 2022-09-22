@@ -14,7 +14,10 @@ public class RelayClient : MonoBehaviour
     private NetworkDriver PlayerDriver;
     public bool connected { get; internal set; }
 
-    public UTPTransport transport;
+    public event Action OnConnected;
+    public event Action<ArraySegment<byte>,int> OnDataReceived;
+    public event Action<ArraySegment<byte>,int> OnDataSent;
+    public event Action OnDisconnected;
 
     private NetworkConnection clientConnection;
 
@@ -43,13 +46,14 @@ public class RelayClient : MonoBehaviour
                 UILogManager.log.Write("Client connected to the server");
                 Debug.Log("We are now connected to the server");
                 connected = true;
-                transport.OnClientConnected?.Invoke();
+                OnConnected?.Invoke();
             }
             else if (eventType == NetworkEvent.Type.Disconnect)
             {
                 UILogManager.log.Write("Client got disconnected from server");
                 Debug.Log("Client disconnected from the server");
                 clientConnection = default(NetworkConnection);
+                OnDisconnected?.Invoke();
             }
             else if (eventType == NetworkEvent.Type.Data)
             {
@@ -59,8 +63,8 @@ public class RelayClient : MonoBehaviour
                     array[i] = stream.ReadByte();
                 }
                 ArraySegment<byte> segment = new ArraySegment<byte>(array);
-                transport.OnClientDataReceived?.Invoke(segment, 0);
                 Debug.Log("I Received Data");
+                OnDataReceived?.Invoke(segment, 0);
             }
         }
     }
@@ -79,14 +83,12 @@ public class RelayClient : MonoBehaviour
             Debug.LogError("Disconnected from the server");
             return;
         }
-
-
         DataStreamWriter writer;
         PlayerDriver.BeginSend(clientConnection, out writer);
         foreach (byte b in segment)
             writer.WriteByte(b);
         PlayerDriver.EndSend(writer);
-        transport.OnClientDataSent?.Invoke(segment,0);
+        OnDataSent?.Invoke(segment,0);
     }
 
 

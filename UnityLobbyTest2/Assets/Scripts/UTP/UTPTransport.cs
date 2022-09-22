@@ -8,11 +8,6 @@ public class UTPTransport : Transport
     [SerializeField] private RelayServer _server;
     [HideInInspector] public string joinCode;
 
-    private void Awake()
-    {
-        _server.OnServerReady += OnRelayServerReady;
-    }
-
     #region LoopMethods
     public override void ServerEarlyUpdate()
     {
@@ -42,7 +37,8 @@ public class UTPTransport : Transport
 
     public override void ClientConnect(string address)
     {
-        
+        DontDestroyOnLoad(_client);
+        InitRelayClientEvents();
         StartCoroutine(_client.InitClient(address));
     }
 
@@ -88,6 +84,8 @@ public class UTPTransport : Transport
 
     public override void ServerStart()
     {
+        DontDestroyOnLoad(_server);
+        InitRelayServerEvents();
         StartCoroutine(_server.InitHost());
     }
 
@@ -119,6 +117,22 @@ public class UTPTransport : Transport
     {
         NetworkManager.singleton.networkAddress = joinCode;
         NetworkManager.singleton.OnStartHost();
+    }
+
+    private void InitRelayServerEvents()
+    {
+        _server.OnServerReady += OnRelayServerReady;
+        _server.OnServerConnected += OnServerConnected;
+        _server.OnServerDisconnected += OnServerDisconnected;
+        _server.OnServerDataReceived += OnServerDataReceived;
+        _server.OnServerDataSent += OnServerDataSent;
+    }
+    private void InitRelayClientEvents()
+    {
+        _client.OnConnected += OnClientConnected;
+        _client.OnDataReceived += OnClientDataReceived;
+        _client.OnDataSent += OnClientDataSent;
+        _client.OnDisconnected += OnClientDisconnected;
     }
     #endregion
 }

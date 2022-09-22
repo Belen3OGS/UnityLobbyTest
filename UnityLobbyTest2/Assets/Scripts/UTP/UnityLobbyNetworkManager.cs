@@ -10,6 +10,7 @@ public class UnityLobbyNetworkManager : NetworkManager
     public override void Start()
     {
         base.Start();
+        DontDestroyOnLoad(lobbyManager);
         lobbyManager.OnLobbyJoined += OnLobbyJoined;
     }
 

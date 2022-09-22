@@ -26,10 +26,6 @@ public class LobbyManager : MonoBehaviour
     private bool unityServicesInitialized = false;
 
     #region Initialization
-    private void Awake()
-    {
-        DontDestroyOnLoad(this);
-    }
 
     void Start()
     {
@@ -216,7 +212,8 @@ public class LobbyManager : MonoBehaviour
             string joinCode = currentLobby.Data["Address"].Value;
 
             UILogManager.log.Write("Join code is " + joinCode);
-            //yield return relayClient.InitClient(joinCode);
+
+            OnLobbyJoined?.Invoke(joinCode);
         }
     }
     #endregion

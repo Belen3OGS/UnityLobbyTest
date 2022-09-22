@@ -11,14 +11,16 @@ using System.Collections;
 
 public class RelayServer : MonoBehaviour
 {
-    public UTPTransport transport;
-
     [SerializeField] public int MaxPacketSize;
     NetworkDriver serverDriver;
     public RelayHelper.RelayHostData hostData;
     RelayServerData relayServerData;
 
     public event Action<string> OnServerReady;
+    public event Action<int> OnServerConnected;
+    public event Action<int> OnServerDisconnected;
+    public event Action<int,ArraySegment<byte>,int> OnServerDataReceived;
+    public event Action<int,ArraySegment<byte>,int> OnServerDataSent;
 
     public bool IsRelayServerConnected { get; private set; }
     public JoinAllocation JoinAllocation { get; private set; }
@@ -106,7 +108,7 @@ public class RelayServer : MonoBehaviour
         {
             connections.Add(incomingConnection);
             UILogManager.log.Write("Accepted an incoming connection.");
-            transport.OnServerConnected?.Invoke(incomingConnection.InternalId + 1);
+            OnServerConnected?.Invoke(incomingConnection.InternalId + 1);
         }
 
         //Process events from all connections
@@ -138,7 +140,7 @@ public class RelayServer : MonoBehaviour
                             array[j] = stream.ReadByte();
                         }
                         ArraySegment<byte> segment = new ArraySegment<byte>(array);
-                        transport.OnServerDataReceived?.Invoke(i + 1, segment, 0);
+                        OnServerDataReceived?.Invoke(i + 1, segment, 0);
                     }
                 }
             }
@@ -165,7 +167,7 @@ public class RelayServer : MonoBehaviour
         foreach (byte b in segment)
             writer.WriteByte(b);
         serverDriver.EndSend(writer);
-        transport.OnServerDataSent?.Invoke(i, segment, 0);
+        OnServerDataSent?.Invoke(i, segment, 0);
     }
 
     private async Task ServerBindAndListenAsHostPlayer(RelayServerData relayNetworkParameter)
@@ -207,7 +209,7 @@ public class RelayServer : MonoBehaviour
     public void DisconnectPlayer(int i) 
     {
         connections[i - 1] = default(NetworkConnection);
-        transport.OnServerDisconnected?.Invoke(i);
+        OnServerDisconnected?.Invoke(i);
     }
 
     public void Shutdown()
