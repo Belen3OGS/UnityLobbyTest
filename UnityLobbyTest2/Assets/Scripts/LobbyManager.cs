@@ -246,6 +246,7 @@ public class LobbyManager : MonoBehaviour
         var delay = new WaitForSecondsRealtime(waitTimeSeconds);
         while (true)
         {
+            Debug.Log("Heartbeat");
             Lobbies.Instance.SendHeartbeatPingAsync(lobbyId);
             yield return delay;
         }
@@ -253,20 +254,21 @@ public class LobbyManager : MonoBehaviour
     #endregion
 
     #region Disposal
-    private void OnDestroy()
-    {
-        // We need to delete the lobby when we're not using it
-        if (currentLobby != null)
-            Lobbies.Instance.DeleteLobbyAsync(currentLobby.Id);
-    } 
 
     public void DisconnectFromLobby()
     {
-        LobbyService.Instance.RemovePlayerAsync(currentLobby.Id, loggedInPlayer.Id);
+        if(currentLobby != null)
+            LobbyService.Instance.RemovePlayerAsync(currentLobby.Id, loggedInPlayer.Id);
     }
+
     public void StopLobby()
     {
-        Lobbies.Instance.DeleteLobbyAsync(currentLobby.Id);
+        StopAllCoroutines();
+        if (currentLobby != null && currentLobby.HostId == loggedInPlayer.Id)
+        {
+            Lobbies.Instance.DeleteLobbyAsync(currentLobby.Id);
+            Debug.Log("LOBBY STOPPED");
+        }
     }
 
     #endregion

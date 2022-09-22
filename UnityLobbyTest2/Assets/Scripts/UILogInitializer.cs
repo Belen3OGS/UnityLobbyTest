@@ -13,5 +13,11 @@ namespace Assets
             DontDestroyOnLoad(debugText.transform.parent.gameObject);
             UILogManager.log = new Log(debugText);
         }
+
+        private void OnDestroy()
+        {
+            if(debugText != null)
+                Destroy(debugText.transform.parent.gameObject);
+        }
     }
 }

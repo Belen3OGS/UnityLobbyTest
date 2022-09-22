@@ -32,7 +32,8 @@ public class UnityLobbyNetworkManager : NetworkManager
     public override void OnClientDisconnect()
     {
         base.OnClientDisconnect();
-        lobbyManager.DisconnectFromLobby();
+        if (mode == NetworkManagerMode.ClientOnly)
+            lobbyManager.DisconnectFromLobby();
     }
 
     public override void OnStopServer()
@@ -67,5 +68,10 @@ public class UnityLobbyNetworkManager : NetworkManager
         StartClient();
     }
 
-
+    public override void OnDestroy()
+    {
+        base.OnDestroy();
+        if(lobbyManager != null)
+            Destroy(lobbyManager.gameObject);
+    }
 }

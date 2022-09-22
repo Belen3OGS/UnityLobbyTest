@@ -214,9 +214,15 @@ public class RelayServer : MonoBehaviour
 
     public void Shutdown()
     {
-        serverDriver.ScheduleUpdate().Complete();
-        serverDriver.Dispose();
-        connections.Dispose();
+        if(serverDriver.IsCreated)
+        {
+            serverDriver.ScheduleUpdate().Complete();
+            serverDriver.Dispose();
+        }
+        if (connections.IsCreated)
+        {
+            connections.Dispose();
+        }
         IsRelayServerConnected = false;
     }
 }

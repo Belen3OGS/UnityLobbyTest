@@ -44,7 +44,7 @@ public class UTPTransport : Transport
 
     public override bool ClientConnected()
     {
-        return _client.connected;
+        return _client.IsClientConnected;
     }
 
     public override void ClientDisconnect()
@@ -135,4 +135,12 @@ public class UTPTransport : Transport
         _client.OnDisconnected += OnClientDisconnected;
     }
     #endregion
+
+    private void OnDestroy()
+    {
+        if(_client != null)
+            Destroy(_client.gameObject);
+        if(_server != null)
+            Destroy(_server.gameObject);
+    }
 }

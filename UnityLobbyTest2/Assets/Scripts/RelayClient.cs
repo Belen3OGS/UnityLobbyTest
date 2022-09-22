@@ -12,7 +12,7 @@ public class RelayClient : MonoBehaviour
     public RelayHelper.RelayJoinData joinData;
     public JoinAllocation JoinAllocation { get; private set; }
     private NetworkDriver PlayerDriver;
-    public bool connected { get; internal set; }
+    public bool IsClientConnected { get; internal set; }
 
     public event Action OnConnected;
     public event Action<ArraySegment<byte>,int> OnDataReceived;
@@ -45,7 +45,7 @@ public class RelayClient : MonoBehaviour
             {
                 UILogManager.log.Write("Client connected to the server");
                 Debug.Log("We are now connected to the server");
-                connected = true;
+                IsClientConnected = true;
                 OnConnected?.Invoke();
             }
             else if (eventType == NetworkEvent.Type.Disconnect)
@@ -155,13 +155,14 @@ public class RelayClient : MonoBehaviour
     
     public void Shutdown()
     {
-        if (connected)
+        if (PlayerDriver.IsCreated)
         {
             PlayerDriver.ScheduleUpdate().Complete();
-            clientConnection.Disconnect(PlayerDriver);
+            if(clientConnection.IsCreated)
+                clientConnection.Disconnect(PlayerDriver);
             PlayerDriver.Dispose();
-            connected = false;
         }
+        IsClientConnected = false;
     }
 
     private void OnDestroy()
