@@ -99,7 +99,7 @@ public class UTPTransport : Transport
     public override Uri ServerUri()
     {
         if (_server.IsRelayServerConnected)
-            return new Uri.;
+            return new Uri(_server.hostData.JoinCode, UriKind.Relative);
         else return null;
     }
 

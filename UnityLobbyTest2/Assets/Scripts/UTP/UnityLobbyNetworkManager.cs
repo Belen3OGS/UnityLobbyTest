@@ -52,7 +52,7 @@ public class UnityLobbyNetworkManager : NetworkManager
         {
             Uri uri = transport.ServerUri();
             if (uri != null)
-                networkAddress = uri.Host;
+                networkAddress = uri.OriginalString;
             else
                 Debug.LogError("URI was null");
             StartCoroutine(lobbyManager.CreateLobby(networkAddress, maxConnections, privateServer));
