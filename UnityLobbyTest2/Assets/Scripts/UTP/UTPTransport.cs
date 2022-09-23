@@ -7,9 +7,13 @@ namespace Multiplayer.MirrorCustom
 {
     public class UTPTransport : Transport
     {
-        [SerializeField] private RelayClient _client;
-        [SerializeField] private RelayServer _server;
-        [HideInInspector] public string joinCode;
+        [HideInInspector]
+        public string joinCode;
+
+        [SerializeField]
+        private RelayClient _client;
+        [SerializeField]
+        private RelayServer _server;
 
         #region LoopMethods
         public override void ServerEarlyUpdate()
@@ -100,7 +104,7 @@ namespace Multiplayer.MirrorCustom
         public override Uri ServerUri()
         {
             if (_server.IsRelayServerConnected)
-                return new Uri(_server.hostData.JoinCode, UriKind.Relative);
+                return new Uri(_server.HostData.JoinCode, UriKind.Relative);
             else return null;
         }
 

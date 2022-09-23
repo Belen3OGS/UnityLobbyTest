@@ -10,10 +10,8 @@ namespace Multiplayer.RelayManagement
 {
     public class RelayClient : MonoBehaviour
     {
-        RelayServerData relayServerData;
-        public RelayHelper.RelayJoinData joinData;
+        public RelayHelper.RelayJoinData JoinData { get; private set; }
         public JoinAllocation JoinAllocation { get; private set; }
-        private NetworkDriver PlayerDriver;
         public bool IsClientConnected { get; internal set; }
 
         public event Action OnConnected;
@@ -21,7 +19,9 @@ namespace Multiplayer.RelayManagement
         public event Action<ArraySegment<byte>, int> OnDataSent;
         public event Action OnDisconnected;
 
-        private NetworkConnection clientConnection;
+        private RelayServerData _serverData;
+        private NetworkDriver _driver;
+        private NetworkConnection _connection;
 
         public IEnumerator InitClient(string joinCode)
         {
@@ -32,16 +32,16 @@ namespace Multiplayer.RelayManagement
         public void ClientEarlyUpdate()
         {
             //Debug.Log("ClientEarlyUpdate");
-            if (!(PlayerDriver.IsCreated && clientConnection.IsCreated))
+            if (!(_driver.IsCreated && _connection.IsCreated))
                 return;
 
-            PlayerDriver.ScheduleUpdate().Complete();
+            _driver.ScheduleUpdate().Complete();
 
             DataStreamReader stream;
 
             //Resolve event queue
             NetworkEvent.Type eventType;
-            while ((eventType = clientConnection.PopEvent(PlayerDriver, out stream)) != NetworkEvent.Type.Empty)
+            while ((eventType = _connection.PopEvent(_driver, out stream)) != NetworkEvent.Type.Empty)
             {
                 if (eventType == NetworkEvent.Type.Connect)
                 {
@@ -54,7 +54,7 @@ namespace Multiplayer.RelayManagement
                 {
                     UILogManager.log.Write("Client got disconnected from server");
                     Debug.Log("Client disconnected from the server");
-                    clientConnection = default(NetworkConnection);
+                    _connection = default(NetworkConnection);
                     OnDisconnected?.Invoke();
                 }
                 else if (eventType == NetworkEvent.Type.Data)
@@ -74,22 +74,22 @@ namespace Multiplayer.RelayManagement
         public void ClientLateUpdate()
         {
             //Debug.Log("ClientLateUpdate");
-            if (!(PlayerDriver.IsCreated && clientConnection.IsCreated))
+            if (!(_driver.IsCreated && _connection.IsCreated))
                 return;
         }
 
         public void SendToServer(ArraySegment<byte> segment, int channelId)
         {
-            if (!clientConnection.IsCreated)
+            if (!_connection.IsCreated)
             {
                 Debug.LogError("Disconnected from the server");
                 return;
             }
             DataStreamWriter writer;
-            PlayerDriver.BeginSend(clientConnection, out writer);
+            _driver.BeginSend(_connection, out writer);
             foreach (byte b in segment)
                 writer.WriteByte(b);
-            PlayerDriver.EndSend(writer);
+            _driver.EndSend(writer);
             OnDataSent?.Invoke(segment, 0);
         }
 
@@ -113,37 +113,37 @@ namespace Multiplayer.RelayManagement
             UILogManager.log.Write($"Player allocated with allocation Id: {JoinAllocation.AllocationId}");
 
             // Format the server data, based on desired connectionType
-            relayServerData = RelayHelper.PlayerRelayData(JoinAllocation, "udp");
+            _serverData = RelayHelper.PlayerRelayData(JoinAllocation, "udp");
 
             // Create the NetworkSettings with Relay parameters
             var networkSettings = new NetworkSettings();
-            networkSettings.WithRelayParameters(serverData: ref relayServerData);
+            networkSettings.WithRelayParameters(serverData: ref _serverData);
 
             // Create the NetworkDriver using the Relay parameters
-            PlayerDriver = NetworkDriver.Create(networkSettings);
+            _driver = NetworkDriver.Create(networkSettings);
 
             // Bind the NetworkDriver to the available local endpoint.
             // This will send the bind request to the Relay server
-            if (PlayerDriver.Bind(NetworkEndPoint.AnyIpv4) != 0)
+            if (_driver.Bind(NetworkEndPoint.AnyIpv4) != 0)
             {
                 UILogManager.log.Write("Client failed to bind");
             }
             else
             {
-                while (!PlayerDriver.Bound)
+                while (!_driver.Bound)
                 {
-                    PlayerDriver.ScheduleUpdate().Complete();
+                    _driver.ScheduleUpdate().Complete();
                     yield return null;
                 }
 
                 // Once the client is bound to the Relay server, you can send a connection request
-                clientConnection = PlayerDriver.Connect(relayServerData.Endpoint);
+                _connection = _driver.Connect(_serverData.Endpoint);
             }
 
             UILogManager.log.Write("Conected");
 
             // Create Object
-            joinData = new RelayHelper.RelayJoinData
+            JoinData = new RelayHelper.RelayJoinData
             {
                 Key = JoinAllocation.Key,
                 Port = (ushort)JoinAllocation.RelayServer.Port,
@@ -157,16 +157,16 @@ namespace Multiplayer.RelayManagement
 
         public void Shutdown()
         {
-            if (PlayerDriver.IsCreated)
+            if (_driver.IsCreated)
             {
-                PlayerDriver.ScheduleUpdate().Complete();
-                if (clientConnection.IsCreated)
+                _driver.ScheduleUpdate().Complete();
+                if (_connection.IsCreated)
                 {
-                    clientConnection.Close(PlayerDriver);
-                    clientConnection.Disconnect(PlayerDriver);
-                    PlayerDriver.Disconnect(clientConnection);
+                    _connection.Close(_driver);
+                    _connection.Disconnect(_driver);
+                    _driver.Disconnect(_connection);
                 }
-                PlayerDriver.Dispose();
+                _driver.Dispose();
             }
             IsClientConnected = false;
         }

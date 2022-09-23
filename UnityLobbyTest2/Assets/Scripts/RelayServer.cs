@@ -12,10 +12,21 @@ namespace Multiplayer.RelayManagement
 {
     public class RelayServer : MonoBehaviour
     {
-        [SerializeField] public int MaxPacketSize;
-        NetworkDriver serverDriver;
-        public RelayHelper.RelayHostData hostData;
-        RelayServerData relayServerData;
+        public int MaxPacketSize;
+        public int MaxPlayers;
+        public RelayHelper.RelayHostData HostData
+        {
+            get { return _hostData; }
+            private set { }
+        }
+        public RelayServerData ServerData
+        {
+            get { return _serverData; }
+            private set { }
+        }
+        public bool IsRelayServerConnected { get; private set; }
+        public JoinAllocation JoinAllocation { get; private set; }
+        public Guid PlayerAllocationId { get; private set; }
 
         public event Action<string> OnServerReady;
         public event Action<int> OnServerConnected;
@@ -23,19 +34,18 @@ namespace Multiplayer.RelayManagement
         public event Action<int, ArraySegment<byte>, int> OnServerDataReceived;
         public event Action<int, ArraySegment<byte>, int> OnServerDataSent;
 
-        public bool IsRelayServerConnected { get; private set; }
-        public JoinAllocation JoinAllocation { get; private set; }
-        public Guid PlayerAllocationId { get; private set; }
-        private NativeList<NetworkConnection> connections;
-        public int maxPlayers;
+        private RelayHelper.RelayHostData _hostData;
+        private RelayServerData _serverData;
+        private NetworkDriver _serverDriver;
+        private NativeList<NetworkConnection> _connections;
 
         public IEnumerator InitHost()
         {
             UILogManager.log.Write("Creating Relay Object");
 
-            connections = new NativeList<NetworkConnection>(maxPlayers, Allocator.Persistent);
+            _connections = new NativeList<NetworkConnection>(MaxPlayers, Allocator.Persistent);
 
-            var createAllocationTask = RelayService.Instance.CreateAllocationAsync(maxPlayers);
+            var createAllocationTask = RelayService.Instance.CreateAllocationAsync(MaxPlayers);
             while (!createAllocationTask.IsCompleted)
                 yield return null;
             if (createAllocationTask.IsFaulted)
@@ -47,7 +57,7 @@ namespace Multiplayer.RelayManagement
 
             Debug.Log("Alocation: " + allocation);
 
-            hostData = new RelayHelper.RelayHostData
+            HostData = new RelayHelper.RelayHostData
             {
                 Key = allocation.Key,
                 Port = (ushort)allocation.RelayServer.Port,
@@ -66,11 +76,11 @@ namespace Multiplayer.RelayManagement
                 yield break;
             }
             // Retrieve JoinCode, with this you can join later
-            hostData.JoinCode = getJoinCodeTask.Result;
+            _hostData.JoinCode = getJoinCodeTask.Result;
 
-            relayServerData = RelayHelper.HostRelayData(allocation, "udp");
+            ServerData = RelayHelper.HostRelayData(allocation, "udp");
 
-            var serverBindAsHotTask = ServerBindAndListenAsHostPlayer(relayServerData);
+            var serverBindAsHotTask = ServerBindAndListenAsHostPlayer(ServerData);
             while (!serverBindAsHotTask.IsCompleted)
                 yield return null;
             if (serverBindAsHotTask.IsFaulted)
@@ -82,34 +92,34 @@ namespace Multiplayer.RelayManagement
             IsRelayServerConnected = true;
 
             Debug.Log("RELAY READY!!");
-            OnServerReady?.Invoke(hostData.JoinCode);
+            OnServerReady?.Invoke(HostData.JoinCode);
         }
 
         public void HostEarlyUpdate()
         {
-            if (!(serverDriver.IsCreated && IsRelayServerConnected))
+            if (!(_serverDriver.IsCreated && IsRelayServerConnected))
                 return;
 
-            serverDriver.ScheduleUpdate().Complete();
+            _serverDriver.ScheduleUpdate().Complete();
 
             //Accept incoming client connections
             NetworkConnection incomingConnection;
-            while ((incomingConnection = serverDriver.Accept()) != default(NetworkConnection))
+            while ((incomingConnection = _serverDriver.Accept()) != default(NetworkConnection))
             {
-                connections.Add(incomingConnection);
+                _connections.Add(incomingConnection);
                 UILogManager.log.Write("Accepted an incoming connection.");
                 OnServerConnected?.Invoke(incomingConnection.InternalId + 1);
             }
 
             //Process events from all connections
-            for (int i = 0; i < connections.Length; i++)
+            for (int i = 0; i < _connections.Length; i++)
             {
                 DataStreamReader stream;
 
-                if (connections[i].IsCreated)
+                if (_connections[i].IsCreated)
                 {
                     NetworkEvent.Type eventType;
-                    while ((eventType = serverDriver.PopEventForConnection(connections[i], out stream)) != NetworkEvent.Type.Empty)
+                    while ((eventType = _serverDriver.PopEventForConnection(_connections[i], out stream)) != NetworkEvent.Type.Empty)
                     {
                         if (eventType == NetworkEvent.Type.Disconnect)
                         {
@@ -139,23 +149,23 @@ namespace Multiplayer.RelayManagement
         }
         public void HostLateUpdate()
         {
-            if (!(serverDriver.IsCreated && IsRelayServerConnected))
+            if (!(_serverDriver.IsCreated && IsRelayServerConnected))
                 return;
         }
 
         public void SendToClient(int i, ArraySegment<byte> segment, int channelId)
         {
-            if (!connections[i - 1].IsCreated)
+            if (!_connections[i - 1].IsCreated)
             {
                 Debug.LogError("Client already disconnected");
                 return;
             }
 
             DataStreamWriter writer;
-            serverDriver.BeginSend(connections[i - 1], out writer);
+            _serverDriver.BeginSend(_connections[i - 1], out writer);
             foreach (byte b in segment)
                 writer.WriteByte(b);
-            serverDriver.EndSend(writer);
+            _serverDriver.EndSend(writer);
             OnServerDataSent?.Invoke(i, segment, 0);
         }
 
@@ -166,24 +176,24 @@ namespace Multiplayer.RelayManagement
             networkSettings.WithRelayParameters(serverData: ref relayNetworkParameter);
 
             // Create the NetworkDriver using NetworkSettings
-            serverDriver = NetworkDriver.Create(networkSettings);
+            _serverDriver = NetworkDriver.Create(networkSettings);
 
             // Bind the NetworkDriver to the local endpoint
-            if (serverDriver.Bind(NetworkEndPoint.AnyIpv4) != 0)
+            if (_serverDriver.Bind(NetworkEndPoint.AnyIpv4) != 0)
             {
                 UILogManager.log.Write("Server failed to bind");
             }
             else
             {
                 // The binding process is an async operation; wait until bound
-                while (!serverDriver.Bound)
+                while (!_serverDriver.Bound)
                 {
-                    serverDriver.ScheduleUpdate().Complete();
+                    _serverDriver.ScheduleUpdate().Complete();
                     await Task.Delay(10);
                 }
 
                 // Once the driver is bound you can start listening for connection requests
-                if (serverDriver.Listen() != 0)
+                if (_serverDriver.Listen() != 0)
                 {
                     UILogManager.log.Write("Server failed to listen");
                 }
@@ -197,20 +207,20 @@ namespace Multiplayer.RelayManagement
 
         public void DisconnectPlayer(int i)
         {
-            connections[i - 1] = default(NetworkConnection);
+            _connections[i - 1] = default(NetworkConnection);
             OnServerDisconnected?.Invoke(i);
         }
 
         public void Shutdown()
         {
-            if (serverDriver.IsCreated)
+            if (_serverDriver.IsCreated)
             {
-                serverDriver.ScheduleUpdate().Complete();
-                serverDriver.Dispose();
+                _serverDriver.ScheduleUpdate().Complete();
+                _serverDriver.Dispose();
             }
-            if (connections.IsCreated)
+            if (_connections.IsCreated)
             {
-                connections.Dispose();
+                _connections.Dispose();
             }
             IsRelayServerConnected = false;
         }

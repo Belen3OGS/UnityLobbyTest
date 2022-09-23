@@ -8,15 +8,15 @@ namespace Multiplayer.MirrorCustom
     public class UnityLobbyNetworkManager : NetworkManager
     {
         [SerializeField]
-        private LobbyManager lobbyManager;
+        private LobbyManager _lobbyManager;
         [SerializeField]
-        private bool privateServer;
+        private bool _privateServer;
 
         public override void Start()
         {
             base.Start();
-            DontDestroyOnLoad(lobbyManager);
-            lobbyManager.OnLobbyJoined += OnLobbyJoined;
+            DontDestroyOnLoad(_lobbyManager);
+            _lobbyManager.OnLobbyJoined += OnLobbyJoined;
         }
 
         public override void OnServerReady(NetworkConnectionToClient conn)
@@ -31,7 +31,7 @@ namespace Multiplayer.MirrorCustom
 
         public override void OnStopClient()
         {
-            lobbyManager.DisconnectFromLobby();
+            _lobbyManager.DisconnectFromLobby();
         }
 
         public override void OnClientConnect()
@@ -43,13 +43,13 @@ namespace Multiplayer.MirrorCustom
         {
             base.OnClientDisconnect();
             if (mode == NetworkManagerMode.ClientOnly)
-                lobbyManager.DisconnectFromLobby();
+                _lobbyManager.DisconnectFromLobby();
         }
 
         public override void OnStopServer()
         {
             base.OnStopServer();
-            lobbyManager.StopLobby();
+            _lobbyManager.StopLobby();
         }
 
         public override void OnServerConnect(NetworkConnectionToClient conn)
@@ -67,7 +67,7 @@ namespace Multiplayer.MirrorCustom
                     networkAddress = uri.OriginalString;
                 else
                     Debug.LogError("URI was null");
-                StartCoroutine(lobbyManager.CreateLobby(networkAddress, maxConnections, privateServer));
+                StartCoroutine(_lobbyManager.CreateLobby(networkAddress, maxConnections, _privateServer));
                 Debug.Log("SERVER DOUBLE READY!!!!!!!!");
             }
         }
@@ -81,8 +81,8 @@ namespace Multiplayer.MirrorCustom
         public override void OnDestroy()
         {
             base.OnDestroy();
-            if(lobbyManager != null)
-                Destroy(lobbyManager.gameObject);
+            if(_lobbyManager != null)
+                Destroy(_lobbyManager.gameObject);
         }
     }
 }

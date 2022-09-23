@@ -15,18 +15,18 @@ namespace Multiplayer.LobbyManagement
 {
     public class LobbyManager : MonoBehaviour
     {
-        [SerializeField] InputField lobbyName;
-        [SerializeField] NetworkManager mirrorManager;
+        [SerializeField]
+        private InputField lobbyName;
+        public bool IsConnectedToLobby { get; private set; } = false;
+        public Player LoggedInPlayer { get; private set; }
+        public Guid PlayerAllocationId { get; private set; }
+
         public event Action<string> OnLobbyJoined;
         public event Action OnLobbyCreated;
 
-        public Player loggedInPlayer { get; private set; }
-        public Guid playerAllocationId { get; private set; }
-
-        private Lobby currentLobby;
-        private List<Lobby> currentLobbyList;
-        private bool unityServicesInitialized = false;
-        private bool IsConnectedToLobby = false;
+        private Lobby _currentLobby;
+        private List<Lobby> _currentLobbyList;
+        private bool _unityServicesInitialized = false;
 
         #region Initialization
 
@@ -37,7 +37,7 @@ namespace Multiplayer.LobbyManagement
 
         public bool IsUnityServicesInitialized()
         {
-            if (!unityServicesInitialized)
+            if (!_unityServicesInitialized)
             {
                 Debug.LogError("Unity Services have not been initialized!!!");
                 return false;
@@ -74,9 +74,9 @@ namespace Multiplayer.LobbyManagement
                 yield break;
             }
             else
-                loggedInPlayer = logInTask.Result;
+                LoggedInPlayer = logInTask.Result;
 
-            unityServicesInitialized = true;
+            _unityServicesInitialized = true;
         }
         #endregion
 
@@ -104,7 +104,7 @@ namespace Multiplayer.LobbyManagement
 
             // Add some data to our player
             // This data will be included in a lobby under players -> player.data
-            loggedInPlayer.Data.Add("Ready", new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, "No"));
+            LoggedInPlayer.Data.Add("Ready", new PlayerDataObject(PlayerDataObject.VisibilityOptions.Member, "No"));
 
             //Creating Lobby Data
             var lobbyData = new Dictionary<string, DataObject>()
@@ -124,7 +124,7 @@ namespace Multiplayer.LobbyManagement
                 {
                     Data = lobbyData,
                     IsPrivate = isPrivate,
-                    Player = loggedInPlayer
+                    Player = LoggedInPlayer
                 });
             while (!createLobby.IsCompleted)
                 yield return null;
@@ -133,11 +133,11 @@ namespace Multiplayer.LobbyManagement
                 Debug.LogError("Lobby Creation Failed!!");
                 yield break;
             }
-            currentLobby = createLobby.Result;
+            _currentLobby = createLobby.Result;
 
-            UILogManager.log.Write("Created new lobby " + currentLobby.Name + " " + currentLobby.Id);
+            UILogManager.log.Write("Created new lobby " + _currentLobby.Name + " " + _currentLobby.Id);
 
-            StartCoroutine(HeartbeatLobbyCoroutine(currentLobby.Id, 15));
+            StartCoroutine(HeartbeatLobbyCoroutine(_currentLobby.Id, 15));
 
             IsConnectedToLobby = true;
         }
@@ -183,9 +183,9 @@ namespace Multiplayer.LobbyManagement
             }
             QueryResponse response = findLobbyQuery.Result;
 
-            currentLobbyList = response.Results;
+            _currentLobbyList = response.Results;
 
-            UILogManager.log.Write("Found " + currentLobbyList.Count + " results");
+            UILogManager.log.Write("Found " + _currentLobbyList.Count + " results");
         }
 
         private IEnumerator JoinFirstLobby()
@@ -193,13 +193,13 @@ namespace Multiplayer.LobbyManagement
             if (!IsUnityServicesInitialized())
                 yield break;
 
-            if (currentLobbyList.Count > 0)
+            if (_currentLobbyList.Count > 0)
             {
                 var joinLobbyTask = LobbyService.Instance.JoinLobbyByIdAsync(
-                    lobbyId: currentLobbyList[0].Id,
+                    lobbyId: _currentLobbyList[0].Id,
                     options: new JoinLobbyByIdOptions()
                     {
-                        Player = loggedInPlayer
+                        Player = LoggedInPlayer
                     });
                 while (!joinLobbyTask.IsCompleted)
                 {
@@ -210,11 +210,11 @@ namespace Multiplayer.LobbyManagement
                     UILogManager.log.Write("Join Lobby request failed");
                     yield break;
                 }
-                currentLobby = joinLobbyTask.Result;
+                _currentLobby = joinLobbyTask.Result;
 
-                UILogManager.log.Write("Joined lobby " + currentLobby.Name);
+                UILogManager.log.Write("Joined lobby " + _currentLobby.Name);
 
-                string joinCode = currentLobby.Data["Address"].Value;
+                string joinCode = _currentLobby.Data["Address"].Value;
 
                 UILogManager.log.Write("Join code is " + joinCode);
 
@@ -262,9 +262,9 @@ namespace Multiplayer.LobbyManagement
 
         public void DisconnectFromLobby()
         {
-            if (IsConnectedToLobby && currentLobby != null)
+            if (IsConnectedToLobby && _currentLobby != null)
             {
-                LobbyService.Instance.RemovePlayerAsync(currentLobby.Id, loggedInPlayer.Id);
+                LobbyService.Instance.RemovePlayerAsync(_currentLobby.Id, LoggedInPlayer.Id);
                 IsConnectedToLobby = false;
             }
         }
@@ -272,9 +272,9 @@ namespace Multiplayer.LobbyManagement
         public void StopLobby()
         {
             StopAllCoroutines();
-            if (IsConnectedToLobby && currentLobby != null && currentLobby.HostId == loggedInPlayer.Id)
+            if (IsConnectedToLobby && _currentLobby != null && _currentLobby.HostId == LoggedInPlayer.Id)
             {
-                Lobbies.Instance.DeleteLobbyAsync(currentLobby.Id);
+                Lobbies.Instance.DeleteLobbyAsync(_currentLobby.Id);
                 IsConnectedToLobby = false;
             }
         }
