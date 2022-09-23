@@ -24,6 +24,7 @@ public class LobbyManager : MonoBehaviour
     private Lobby currentLobby;
     private List<Lobby> currentLobbyList;
     private bool unityServicesInitialized = false;
+    private bool IsConnectedToLobby = false;
 
     #region Initialization
 
@@ -135,6 +136,8 @@ public class LobbyManager : MonoBehaviour
         UILogManager.log.Write("Created new lobby " + currentLobby.Name + " " + currentLobby.Id);
 
         StartCoroutine(HeartbeatLobbyCoroutine(currentLobby.Id, 15));
+
+        IsConnectedToLobby = true;
     }
 
     private IEnumerator FindLobbys()
@@ -257,17 +260,20 @@ public class LobbyManager : MonoBehaviour
 
     public void DisconnectFromLobby()
     {
-        if(currentLobby != null)
+        if(IsConnectedToLobby && currentLobby != null)
+        {
             LobbyService.Instance.RemovePlayerAsync(currentLobby.Id, loggedInPlayer.Id);
+            IsConnectedToLobby = false;
+        }
     }
 
     public void StopLobby()
     {
         StopAllCoroutines();
-        if (currentLobby != null && currentLobby.HostId == loggedInPlayer.Id)
+        if (IsConnectedToLobby && currentLobby != null && currentLobby.HostId == loggedInPlayer.Id)
         {
             Lobbies.Instance.DeleteLobbyAsync(currentLobby.Id);
-            Debug.Log("LOBBY STOPPED");
+            IsConnectedToLobby = false;
         }
     }
 

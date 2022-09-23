@@ -24,6 +24,11 @@ public class UnityLobbyNetworkManager : NetworkManager
         base.OnStartClient();
     }
 
+    public override void OnStopClient()
+    {
+        lobbyManager.DisconnectFromLobby();
+    }
+
     public override void OnClientConnect()
     {
         base.OnClientConnect();

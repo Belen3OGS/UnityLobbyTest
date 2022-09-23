@@ -158,8 +158,12 @@ public class RelayClient : MonoBehaviour
         if (PlayerDriver.IsCreated)
         {
             PlayerDriver.ScheduleUpdate().Complete();
-            if(clientConnection.IsCreated)
+            if (clientConnection.IsCreated)
+            {
+                clientConnection.Close(PlayerDriver);
                 clientConnection.Disconnect(PlayerDriver);
+                PlayerDriver.Disconnect(clientConnection);
+            }
             PlayerDriver.Dispose();
         }
         IsClientConnected = false;

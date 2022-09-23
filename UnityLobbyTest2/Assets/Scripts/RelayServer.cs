@@ -86,21 +86,10 @@ public class RelayServer : MonoBehaviour
 
     public void HostEarlyUpdate()
     {
-        //Debug.Log("ServerEarlyUpdate");
         if (!(serverDriver.IsCreated && IsRelayServerConnected))
             return;
 
         serverDriver.ScheduleUpdate().Complete();
-
-        // Clean up stale connections
-        //for (int i = 0; i < connections.Length; i++)
-        //{
-        //    if (!connections[i].IsCreated)
-        //    {
-        //        connections.RemoveAtSwapBack(i);
-        //        --i;
-        //    }
-        //}
 
         //Accept incoming client connections
         NetworkConnection incomingConnection;
@@ -123,13 +112,13 @@ public class RelayServer : MonoBehaviour
                 {
                     if (eventType == NetworkEvent.Type.Disconnect)
                     {
-                        //TODO: map to disconnect from mirror
                         DisconnectPlayer(i + 1);
                         UILogManager.log.Write("Client disconnected from server");
                     }
 
                     if(eventType == NetworkEvent.Type.Connect)
                     {
+                        Debug.Log("PLAYER CONNECTED?");
                     }
 
                     else if (eventType == NetworkEvent.Type.Data)
@@ -149,7 +138,6 @@ public class RelayServer : MonoBehaviour
     }
     public void HostLateUpdate()
     {
-        //Debug.Log("ServerLateUpdate");
         if (!(serverDriver.IsCreated && IsRelayServerConnected))
             return;
     }
