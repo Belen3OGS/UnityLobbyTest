@@ -42,8 +42,10 @@ namespace Multiplayer.LobbyManagement
                 Debug.LogError("Unity Services have not been initialized!!!");
                 return false;
             }
-            else
+            else 
+            {
                 return true;
+            }
         }
 
         private IEnumerator InitializeUnityServices()
@@ -95,10 +97,7 @@ namespace Multiplayer.LobbyManagement
         #region Lobby creation and joining
         public IEnumerator CreateLobby(string address, int maxPlayers, bool isPrivate = false)
         {
-            if (!IsUnityServicesInitialized())
-            {
-                yield break;
-            }
+            if (!IsUnityServicesInitialized()) yield break;
 
             UILogManager.log.Write("Creating a Lobby");
 
@@ -144,8 +143,7 @@ namespace Multiplayer.LobbyManagement
 
         private IEnumerator FindLobbys()
         {
-            if (!IsUnityServicesInitialized())
-                yield break;
+            if (!IsUnityServicesInitialized()) yield break;
 
             UILogManager.log.Write("Creating filters to join");
             List<QueryFilter> queryFilters = new List<QueryFilter>
@@ -190,8 +188,7 @@ namespace Multiplayer.LobbyManagement
 
         private IEnumerator JoinFirstLobby()
         {
-            if (!IsUnityServicesInitialized())
-                yield break;
+            if (!IsUnityServicesInitialized()) yield break;
 
             if (_currentLobbyList.Count > 0)
             {

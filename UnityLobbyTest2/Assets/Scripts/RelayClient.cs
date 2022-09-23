@@ -32,8 +32,7 @@ namespace Multiplayer.RelayManagement
         public void ClientEarlyUpdate()
         {
             //Debug.Log("ClientEarlyUpdate");
-            if (!(_driver.IsCreated && _connection.IsCreated))
-                return;
+            if (!(_driver.IsCreated && _connection.IsCreated)) return;
 
             _driver.ScheduleUpdate().Complete();
 
@@ -74,8 +73,7 @@ namespace Multiplayer.RelayManagement
         public void ClientLateUpdate()
         {
             //Debug.Log("ClientLateUpdate");
-            if (!(_driver.IsCreated && _connection.IsCreated))
-                return;
+            if (!(_driver.IsCreated && _connection.IsCreated)) return;
         }
 
         public void SendToServer(ArraySegment<byte> segment, int channelId)

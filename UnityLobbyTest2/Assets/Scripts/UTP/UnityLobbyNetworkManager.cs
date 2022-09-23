@@ -42,8 +42,7 @@ namespace Multiplayer.MirrorCustom
         public override void OnClientDisconnect()
         {
             base.OnClientDisconnect();
-            if (mode == NetworkManagerMode.ClientOnly)
-                _lobbyManager.DisconnectFromLobby();
+            if (mode == NetworkManagerMode.ClientOnly) _lobbyManager.DisconnectFromLobby();
         }
 
         public override void OnStopServer()
@@ -63,8 +62,7 @@ namespace Multiplayer.MirrorCustom
             if (!networkAddress.Equals("localhost"))
             {
                 Uri uri = transport.ServerUri();
-                if (uri != null)
-                    networkAddress = uri.OriginalString;
+                if (uri != null) networkAddress = uri.OriginalString;
                 else
                     Debug.LogError("URI was null");
                 StartCoroutine(_lobbyManager.CreateLobby(networkAddress, maxConnections, _privateServer));
@@ -81,8 +79,7 @@ namespace Multiplayer.MirrorCustom
         public override void OnDestroy()
         {
             base.OnDestroy();
-            if(_lobbyManager != null)
-                Destroy(_lobbyManager.gameObject);
+            if(_lobbyManager != null) Destroy(_lobbyManager.gameObject);
         }
     }
 }

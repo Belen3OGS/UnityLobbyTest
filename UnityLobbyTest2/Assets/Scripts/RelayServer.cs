@@ -97,8 +97,7 @@ namespace Multiplayer.RelayManagement
 
         public void HostEarlyUpdate()
         {
-            if (!(_serverDriver.IsCreated && IsRelayServerConnected))
-                return;
+            if (!(_serverDriver.IsCreated && IsRelayServerConnected)) return;
 
             _serverDriver.ScheduleUpdate().Complete();
 
@@ -149,8 +148,7 @@ namespace Multiplayer.RelayManagement
         }
         public void HostLateUpdate()
         {
-            if (!(_serverDriver.IsCreated && IsRelayServerConnected))
-                return;
+            if (!(_serverDriver.IsCreated && IsRelayServerConnected)) return;
         }
 
         public void SendToClient(int i, ArraySegment<byte> segment, int channelId)
