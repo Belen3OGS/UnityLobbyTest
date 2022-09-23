@@ -6,171 +6,175 @@ using System;
 using Unity.Networking.Transport;
 using System.Collections;
 
-public class RelayClient : MonoBehaviour
+namespace MyNamespace
 {
-    RelayServerData relayServerData;
-    public RelayHelper.RelayJoinData joinData;
-    public JoinAllocation JoinAllocation { get; private set; }
-    private NetworkDriver PlayerDriver;
-    public bool IsClientConnected { get; internal set; }
-
-    public event Action OnConnected;
-    public event Action<ArraySegment<byte>,int> OnDataReceived;
-    public event Action<ArraySegment<byte>,int> OnDataSent;
-    public event Action OnDisconnected;
-
-    private NetworkConnection clientConnection;
-
-    public IEnumerator InitClient(string joinCode)
+    public class RelayClient : MonoBehaviour
     {
-        UILogManager.log.Write("Join code is " + joinCode);
-        yield return ClientBindAndConnect(joinCode);
-    }
+        RelayServerData relayServerData;
+        public RelayHelper.RelayJoinData joinData;
+        public JoinAllocation JoinAllocation { get; private set; }
+        private NetworkDriver PlayerDriver;
+        public bool IsClientConnected { get; internal set; }
 
-    public void ClientEarlyUpdate()
-    {
-        //Debug.Log("ClientEarlyUpdate");
-        if (!(PlayerDriver.IsCreated && clientConnection.IsCreated))
-            return;
-        
-        PlayerDriver.ScheduleUpdate().Complete();
+        public event Action OnConnected;
+        public event Action<ArraySegment<byte>, int> OnDataReceived;
+        public event Action<ArraySegment<byte>, int> OnDataSent;
+        public event Action OnDisconnected;
 
-        DataStreamReader stream;
+        private NetworkConnection clientConnection;
 
-        //Resolve event queue
-        NetworkEvent.Type eventType;
-        while ((eventType = clientConnection.PopEvent(PlayerDriver, out stream)) != NetworkEvent.Type.Empty)
+        public IEnumerator InitClient(string joinCode)
         {
-            if (eventType == NetworkEvent.Type.Connect)
+            UILogManager.log.Write("Join code is " + joinCode);
+            yield return ClientBindAndConnect(joinCode);
+        }
+
+        public void ClientEarlyUpdate()
+        {
+            //Debug.Log("ClientEarlyUpdate");
+            if (!(PlayerDriver.IsCreated && clientConnection.IsCreated))
+                return;
+
+            PlayerDriver.ScheduleUpdate().Complete();
+
+            DataStreamReader stream;
+
+            //Resolve event queue
+            NetworkEvent.Type eventType;
+            while ((eventType = clientConnection.PopEvent(PlayerDriver, out stream)) != NetworkEvent.Type.Empty)
             {
-                UILogManager.log.Write("Client connected to the server");
-                Debug.Log("We are now connected to the server");
-                IsClientConnected = true;
-                OnConnected?.Invoke();
-            }
-            else if (eventType == NetworkEvent.Type.Disconnect)
-            {
-                UILogManager.log.Write("Client got disconnected from server");
-                Debug.Log("Client disconnected from the server");
-                clientConnection = default(NetworkConnection);
-                OnDisconnected?.Invoke();
-            }
-            else if (eventType == NetworkEvent.Type.Data)
-            {
-                byte[] array = new byte[stream.Length];
-                for (int i=0; i < array.Length; i++)
+                if (eventType == NetworkEvent.Type.Connect)
                 {
-                    array[i] = stream.ReadByte();
+                    UILogManager.log.Write("Client connected to the server");
+                    Debug.Log("We are now connected to the server");
+                    IsClientConnected = true;
+                    OnConnected?.Invoke();
                 }
-                ArraySegment<byte> segment = new ArraySegment<byte>(array);
-                Debug.Log("I Received Data");
-                OnDataReceived?.Invoke(segment, 0);
+                else if (eventType == NetworkEvent.Type.Disconnect)
+                {
+                    UILogManager.log.Write("Client got disconnected from server");
+                    Debug.Log("Client disconnected from the server");
+                    clientConnection = default(NetworkConnection);
+                    OnDisconnected?.Invoke();
+                }
+                else if (eventType == NetworkEvent.Type.Data)
+                {
+                    byte[] array = new byte[stream.Length];
+                    for (int i = 0; i < array.Length; i++)
+                    {
+                        array[i] = stream.ReadByte();
+                    }
+                    ArraySegment<byte> segment = new ArraySegment<byte>(array);
+                    Debug.Log("I Received Data");
+                    OnDataReceived?.Invoke(segment, 0);
+                }
             }
         }
-    }
 
-    public void ClientLateUpdate()
-    {
-        //Debug.Log("ClientLateUpdate");
-        if (!(PlayerDriver.IsCreated && clientConnection.IsCreated))
-            return;
-    }
-
-    public void SendToServer(ArraySegment<byte> segment, int channelId)
-    {
-        if (!clientConnection.IsCreated)
+        public void ClientLateUpdate()
         {
-            Debug.LogError("Disconnected from the server");
-            return;
+            //Debug.Log("ClientLateUpdate");
+            if (!(PlayerDriver.IsCreated && clientConnection.IsCreated))
+                return;
         }
-        DataStreamWriter writer;
-        PlayerDriver.BeginSend(clientConnection, out writer);
-        foreach (byte b in segment)
-            writer.WriteByte(b);
-        PlayerDriver.EndSend(writer);
-        OnDataSent?.Invoke(segment,0);
-    }
 
-
-    private IEnumerator ClientBindAndConnect(string relayJoinCode)
-    {
-        // Send the join request to the Relay service
-        UILogManager.log.Write("Attempting to join allocation with join code... " + relayJoinCode);
-
-        var joinTask = RelayService.Instance.JoinAllocationAsync(relayJoinCode);
-        while (!joinTask.IsCompleted)
-            yield return null;
-        if (joinTask.IsFaulted)
+        public void SendToServer(ArraySegment<byte> segment, int channelId)
         {
-            UILogManager.log.Write("Join Relay request failed");
-            yield break;
+            if (!clientConnection.IsCreated)
+            {
+                Debug.LogError("Disconnected from the server");
+                return;
+            }
+            DataStreamWriter writer;
+            PlayerDriver.BeginSend(clientConnection, out writer);
+            foreach (byte b in segment)
+                writer.WriteByte(b);
+            PlayerDriver.EndSend(writer);
+            OnDataSent?.Invoke(segment, 0);
         }
-        // Collect and convert the Relay data from the join response
-        JoinAllocation = joinTask.Result;
 
-        UILogManager.log.Write($"Player allocated with allocation Id: {JoinAllocation.AllocationId}");
 
-        // Format the server data, based on desired connectionType
-        relayServerData = RelayHelper.PlayerRelayData(JoinAllocation, "udp");
-
-        // Create the NetworkSettings with Relay parameters
-        var networkSettings = new NetworkSettings();
-        networkSettings.WithRelayParameters(serverData: ref relayServerData);
-
-        // Create the NetworkDriver using the Relay parameters
-        PlayerDriver = NetworkDriver.Create(networkSettings);
-
-        // Bind the NetworkDriver to the available local endpoint.
-        // This will send the bind request to the Relay server
-        if (PlayerDriver.Bind(NetworkEndPoint.AnyIpv4) != 0)
+        private IEnumerator ClientBindAndConnect(string relayJoinCode)
         {
-            UILogManager.log.Write("Client failed to bind");
+            // Send the join request to the Relay service
+            UILogManager.log.Write("Attempting to join allocation with join code... " + relayJoinCode);
+
+            var joinTask = RelayService.Instance.JoinAllocationAsync(relayJoinCode);
+            while (!joinTask.IsCompleted)
+                yield return null;
+            if (joinTask.IsFaulted)
+            {
+                UILogManager.log.Write("Join Relay request failed");
+                yield break;
+            }
+            // Collect and convert the Relay data from the join response
+            JoinAllocation = joinTask.Result;
+
+            UILogManager.log.Write($"Player allocated with allocation Id: {JoinAllocation.AllocationId}");
+
+            // Format the server data, based on desired connectionType
+            relayServerData = RelayHelper.PlayerRelayData(JoinAllocation, "udp");
+
+            // Create the NetworkSettings with Relay parameters
+            var networkSettings = new NetworkSettings();
+            networkSettings.WithRelayParameters(serverData: ref relayServerData);
+
+            // Create the NetworkDriver using the Relay parameters
+            PlayerDriver = NetworkDriver.Create(networkSettings);
+
+            // Bind the NetworkDriver to the available local endpoint.
+            // This will send the bind request to the Relay server
+            if (PlayerDriver.Bind(NetworkEndPoint.AnyIpv4) != 0)
+            {
+                UILogManager.log.Write("Client failed to bind");
+            }
+            else
+            {
+                while (!PlayerDriver.Bound)
+                {
+                    PlayerDriver.ScheduleUpdate().Complete();
+                    yield return null;
+                }
+
+                // Once the client is bound to the Relay server, you can send a connection request
+                clientConnection = PlayerDriver.Connect(relayServerData.Endpoint);
+            }
+
+            UILogManager.log.Write("Conected");
+
+            // Create Object
+            joinData = new RelayHelper.RelayJoinData
+            {
+                Key = JoinAllocation.Key,
+                Port = (ushort)JoinAllocation.RelayServer.Port,
+                AllocationID = JoinAllocation.AllocationId,
+                AllocationIDBytes = JoinAllocation.AllocationIdBytes,
+                ConnectionData = JoinAllocation.ConnectionData,
+                HostConnectionData = JoinAllocation.HostConnectionData,
+                IPv4Address = JoinAllocation.RelayServer.IpV4
+            };
         }
-        else
+
+        public void Shutdown()
         {
-            while (!PlayerDriver.Bound)
+            if (PlayerDriver.IsCreated)
             {
                 PlayerDriver.ScheduleUpdate().Complete();
-                yield return null;
+                if (clientConnection.IsCreated)
+                {
+                    clientConnection.Close(PlayerDriver);
+                    clientConnection.Disconnect(PlayerDriver);
+                    PlayerDriver.Disconnect(clientConnection);
+                }
+                PlayerDriver.Dispose();
             }
-
-            // Once the client is bound to the Relay server, you can send a connection request
-            clientConnection = PlayerDriver.Connect(relayServerData.Endpoint);
+            IsClientConnected = false;
         }
 
-        UILogManager.log.Write("Conected");
-
-        // Create Object
-        joinData = new RelayHelper.RelayJoinData
+        private void OnDestroy()
         {
-            Key = JoinAllocation.Key,
-            Port = (ushort)JoinAllocation.RelayServer.Port,
-            AllocationID = JoinAllocation.AllocationId,
-            AllocationIDBytes = JoinAllocation.AllocationIdBytes,
-            ConnectionData = JoinAllocation.ConnectionData,
-            HostConnectionData = JoinAllocation.HostConnectionData,
-            IPv4Address = JoinAllocation.RelayServer.IpV4
-        };
-    }
-    
-    public void Shutdown()
-    {
-        if (PlayerDriver.IsCreated)
-        {
-            PlayerDriver.ScheduleUpdate().Complete();
-            if (clientConnection.IsCreated)
-            {
-                clientConnection.Close(PlayerDriver);
-                clientConnection.Disconnect(PlayerDriver);
-                PlayerDriver.Disconnect(clientConnection);
-            }
-            PlayerDriver.Dispose();
+            Shutdown();
         }
-        IsClientConnected = false;
     }
 
-    private void OnDestroy()
-    {
-        Shutdown();
-    }
 }
