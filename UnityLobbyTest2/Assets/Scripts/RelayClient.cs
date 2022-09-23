@@ -6,7 +6,7 @@ using System;
 using Unity.Networking.Transport;
 using System.Collections;
 
-namespace MyNamespace
+namespace Multiplayer.RelayManagement
 {
     public class RelayClient : MonoBehaviour
     {

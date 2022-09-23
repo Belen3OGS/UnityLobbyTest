@@ -8,7 +8,7 @@ using Unity.Networking.Transport;
 using Unity.Collections;
 using System.Collections;
 
-namespace MyNamespace
+namespace Multiplayer.RelayManagement
 {
     public class RelayServer : MonoBehaviour
     {

@@ -4,7 +4,7 @@ using System;
 using Unity.Networking.Transport;
 using System.Collections.Generic;
 
-namespace Multiplayer
+namespace Multiplayer.RelayManagement
 {
     public static class RelayHelper
     {

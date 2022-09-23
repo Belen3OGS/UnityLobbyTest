@@ -11,7 +11,7 @@ using Random = UnityEngine.Random;
 using System.Collections;
 using Mirror;
 
-namespace Multiplayer
+namespace Multiplayer.LobbyManagement
 {
     public class LobbyManager : MonoBehaviour
     {

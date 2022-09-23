@@ -1,8 +1,9 @@
 ﻿using Mirror;
 using System;
 using UnityEngine;
+using Multiplayer.LobbyManagement;
 
-namespace Multiplayer
+namespace Multiplayer.MirrorCustom
 {
     public class UnityLobbyNetworkManager : NetworkManager
     {
