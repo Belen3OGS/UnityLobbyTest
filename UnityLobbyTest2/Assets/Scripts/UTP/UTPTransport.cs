@@ -76,7 +76,7 @@ namespace Multiplayer.MirrorCustom
 
         public override void ServerDisconnect(int connectionId)
         {
-            _server.DisconnectPlayer(connectionId);
+            _server.DisconnectPlayer(TranslateToRelayId(connectionId));
         }
 
         public override string ServerGetClientAddress(int connectionId)
@@ -86,14 +86,14 @@ namespace Multiplayer.MirrorCustom
 
         public override void ServerSend(int connectionId, ArraySegment<byte> segment, int channelId = 0)
         {
-            _server.SendToClient(connectionId, segment, channelId);
+            _server.SendToClient(TranslateToRelayId(connectionId), segment, channelId);
         }
 
         public override void ServerStart()
         {
             DontDestroyOnLoad(_server);
             InitRelayServerEvents();
-            StartCoroutine(_server.InitHost());
+            StartCoroutine(_server.InitHost(NetworkManager.singleton.maxConnections));
         }
 
         public override void ServerStop()
@@ -110,30 +110,61 @@ namespace Multiplayer.MirrorCustom
 
         public override void Shutdown()
         {
-            //TODO: Tambien para el cliente!!!!!!!!!
-            if (_server != null)
-                _server.Shutdown();
             if (_client != null)
                 _client.Shutdown();
+            if (_server != null)
+                _server.Shutdown();
         }
         #endregion
 
         #region CustomMethods
-        //CUSTOM METHODS
+        //ID TRANSLATION
+        private int TranslateFromRelayId(int relayId)
+        {
+            return relayId + 1;
+        }
+
+        private int TranslateToRelayId(int connectionId)
+        {
+            return (connectionId - 1);
+        }
+
+        //INTERNAL EVENTS
         private void OnRelayServerReady(string joinCode)
         {
             NetworkManager.singleton.networkAddress = joinCode;
             NetworkManager.singleton.OnStartHost();
         }
 
+        private void OnServerConnectedInternal(int relayId)
+        {
+            OnServerConnected?.Invoke(TranslateFromRelayId(relayId));
+        }
+
+        private void OnServerDisconnectedInternal(int relayId)
+        {
+            OnServerDisconnected?.Invoke(TranslateFromRelayId(relayId));
+        }
+
+        private void OnServerDataReceivedInternal(int relayId, ArraySegment<byte> data, int channelId)
+        {
+            OnServerDataReceived?.Invoke(TranslateFromRelayId(relayId), data, channelId);
+        }
+
+        private void OnServerDataSentInternal(int connectionId, ArraySegment<byte> data, int channelId)
+        {
+            OnServerDataSent?.Invoke(TranslateFromRelayId(connectionId), data, channelId);
+        }
+
         private void InitRelayServerEvents()
         {
             _server.OnServerReady += OnRelayServerReady;
-            _server.OnServerConnected += OnServerConnected;
-            _server.OnServerDisconnected += OnServerDisconnected;
-            _server.OnServerDataReceived += OnServerDataReceived;
-            _server.OnServerDataSent += OnServerDataSent;
+            _server.OnServerConnected += OnServerConnectedInternal;
+            _server.OnServerDisconnected += OnServerDisconnectedInternal;
+            _server.OnServerDataReceived += OnServerDataReceivedInternal;
+            _server.OnServerDataSent += OnServerDataSentInternal;
         }
+
         private void InitRelayClientEvents()
         {
             _client.OnConnected += OnClientConnected;
@@ -143,6 +174,7 @@ namespace Multiplayer.MirrorCustom
         }
         #endregion
 
+        //DISPOSAL
         private void OnDestroy()
         {
             if (_client != null)

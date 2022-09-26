@@ -139,6 +139,8 @@ namespace Multiplayer.LobbyManagement
             StartCoroutine(HeartbeatLobbyCoroutine(_currentLobby.Id, 15));
 
             IsConnectedToLobby = true;
+
+            OnLobbyCreated?.Invoke();
         }
 
         private IEnumerator FindLobbys()

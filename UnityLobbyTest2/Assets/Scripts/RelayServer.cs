@@ -13,17 +13,12 @@ namespace Multiplayer.RelayManagement
     public class RelayServer : MonoBehaviour
     {
         public int MaxPacketSize;
-        public int MaxPlayers;
         public RelayHelper.RelayHostData HostData
         {
             get { return _hostData; }
-            private set { }
+            private set { _hostData = value; }
         }
-        public RelayServerData ServerData
-        {
-            get { return _serverData; }
-            private set { }
-        }
+        public RelayServerData ServerData { get; private set; }
         public bool IsRelayServerConnected { get; private set; }
         public JoinAllocation JoinAllocation { get; private set; }
         public Guid PlayerAllocationId { get; private set; }
@@ -35,17 +30,16 @@ namespace Multiplayer.RelayManagement
         public event Action<int, ArraySegment<byte>, int> OnServerDataSent;
 
         private RelayHelper.RelayHostData _hostData;
-        private RelayServerData _serverData;
         private NetworkDriver _serverDriver;
         private NativeList<NetworkConnection> _connections;
 
-        public IEnumerator InitHost()
+        public IEnumerator InitHost(int maxPlayers)
         {
             UILogManager.log.Write("Creating Relay Object");
 
-            _connections = new NativeList<NetworkConnection>(MaxPlayers, Allocator.Persistent);
+            _connections = new NativeList<NetworkConnection>(maxPlayers, Allocator.Persistent);
 
-            var createAllocationTask = RelayService.Instance.CreateAllocationAsync(MaxPlayers);
+            var createAllocationTask = RelayService.Instance.CreateAllocationAsync(maxPlayers);
             while (!createAllocationTask.IsCompleted)
                 yield return null;
             if (createAllocationTask.IsFaulted)
@@ -107,7 +101,7 @@ namespace Multiplayer.RelayManagement
             {
                 _connections.Add(incomingConnection);
                 UILogManager.log.Write("Accepted an incoming connection.");
-                OnServerConnected?.Invoke(incomingConnection.InternalId + 1);
+                OnServerConnected?.Invoke(incomingConnection.InternalId);
             }
 
             //Process events from all connections
@@ -122,7 +116,7 @@ namespace Multiplayer.RelayManagement
                     {
                         if (eventType == NetworkEvent.Type.Disconnect)
                         {
-                            DisconnectPlayer(i + 1);
+                            DisconnectPlayer(i);
                             UILogManager.log.Write("Client disconnected from server");
                         }
 
@@ -139,7 +133,7 @@ namespace Multiplayer.RelayManagement
                                 array[j] = stream.ReadByte();
                             }
                             ArraySegment<byte> segment = new ArraySegment<byte>(array);
-                            OnServerDataReceived?.Invoke(i + 1, segment, 0);
+                            OnServerDataReceived?.Invoke(i, segment, 0);
                         }
                     }
                 }
@@ -153,14 +147,14 @@ namespace Multiplayer.RelayManagement
 
         public void SendToClient(int i, ArraySegment<byte> segment, int channelId)
         {
-            if (!_connections[i - 1].IsCreated)
+            if (!_connections[i].IsCreated)
             {
                 Debug.LogError("Client already disconnected");
                 return;
             }
 
             DataStreamWriter writer;
-            _serverDriver.BeginSend(_connections[i - 1], out writer);
+            _serverDriver.BeginSend(_connections[i], out writer);
             foreach (byte b in segment)
                 writer.WriteByte(b);
             _serverDriver.EndSend(writer);
@@ -205,7 +199,7 @@ namespace Multiplayer.RelayManagement
 
         public void DisconnectPlayer(int i)
         {
-            _connections[i - 1] = default(NetworkConnection);
+            _connections[i] = default(NetworkConnection);
             OnServerDisconnected?.Invoke(i);
         }
 

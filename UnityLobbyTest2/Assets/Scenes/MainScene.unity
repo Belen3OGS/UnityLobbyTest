@@ -197,9 +197,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: abb6531afacc2c742b0e917e0e6c9f66, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  joinCode: 
   _client: {fileID: 380660854}
   _server: {fileID: 971888352}
-  joinCode: 
 --- !u!4 &384270270
 Transform:
   m_ObjectHideFlags: 0
@@ -240,8 +240,8 @@ MonoBehaviour:
   autoCreatePlayer: 1
   playerSpawnMethod: 0
   spawnPrefabs: []
-  lobbyManager: {fileID: 1957832220}
-  privateServer: 0
+  _lobbyManager: {fileID: 1957832220}
+  _privateServer: 0
 --- !u!114 &384270272
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -925,7 +925,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   MaxPacketSize: 500
-  maxPlayers: 4
+  MaxPlayers: 0
 --- !u!4 &971888353
 Transform:
   m_ObjectHideFlags: 0
@@ -1797,7 +1797,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   lobbyName: {fileID: 717856087}
-  mirrorManager: {fileID: 0}
 --- !u!4 &1957832221
 Transform:
   m_ObjectHideFlags: 0
