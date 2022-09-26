@@ -234,12 +234,13 @@ MonoBehaviour:
   onlineScene: Assets/Game/GameScene.unity
   transport: {fileID: 384270269}
   networkAddress: localhost
-  maxConnections: 4
+  maxConnections: 3
   authenticator: {fileID: 0}
   playerPrefab: {fileID: 3705526643235996117, guid: 25b7293edaebe0f4cbdeb393c4a156f3, type: 3}
   autoCreatePlayer: 1
   playerSpawnMethod: 0
-  spawnPrefabs: []
+  spawnPrefabs:
+  - {fileID: 5890560936853567077, guid: 0e8b338eefbe0b7459e2358630d69235, type: 3}
   _lobbyManager: {fileID: 1957832220}
   _privateServer: 0
 --- !u!114 &384270272
@@ -925,7 +926,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   MaxPacketSize: 500
-  MaxPlayers: 0
 --- !u!4 &971888353
 Transform:
   m_ObjectHideFlags: 0
