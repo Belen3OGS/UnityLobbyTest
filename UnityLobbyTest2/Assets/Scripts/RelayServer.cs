@@ -35,8 +35,6 @@ namespace Multiplayer.RelayManagement
 
         public IEnumerator InitHost(int maxPlayers)
         {
-            UILogManager.log.Write("Creating Relay Object");
-
             _connections = new NativeList<NetworkConnection>(maxPlayers, Allocator.Persistent);
 
             var createAllocationTask = RelayService.Instance.CreateAllocationAsync(maxPlayers);
@@ -48,8 +46,6 @@ namespace Multiplayer.RelayManagement
                 yield break;
             }
             Allocation allocation = createAllocationTask.Result;
-
-            Debug.Log("Alocation: " + allocation);
 
             HostData = new RelayHelper.RelayHostData
             {
@@ -84,8 +80,6 @@ namespace Multiplayer.RelayManagement
             }
 
             IsRelayServerConnected = true;
-
-            Debug.Log("RELAY READY!!");
             OnServerReady?.Invoke(HostData.JoinCode);
         }
 
@@ -100,7 +94,6 @@ namespace Multiplayer.RelayManagement
             while ((incomingConnection = _serverDriver.Accept()) != default(NetworkConnection))
             {
                 _connections.Add(incomingConnection);
-                UILogManager.log.Write("Accepted an incoming connection.");
                 OnServerConnected?.Invoke(incomingConnection.InternalId);
             }
 
@@ -117,14 +110,10 @@ namespace Multiplayer.RelayManagement
                         if (eventType == NetworkEvent.Type.Disconnect)
                         {
                             DisconnectPlayer(i);
-                            UILogManager.log.Write("Client disconnected from server");
                         }
-
                         if (eventType == NetworkEvent.Type.Connect)
                         {
-                            Debug.Log("PLAYER CONNECTED?");
                         }
-
                         else if (eventType == NetworkEvent.Type.Data)
                         {
                             byte[] array = new byte[stream.Length];
@@ -152,7 +141,6 @@ namespace Multiplayer.RelayManagement
                 Debug.LogError("Client already disconnected");
                 return;
             }
-
             DataStreamWriter writer;
             _serverDriver.BeginSend(_connections[i], out writer);
             foreach (byte b in segment)
@@ -173,7 +161,7 @@ namespace Multiplayer.RelayManagement
             // Bind the NetworkDriver to the local endpoint
             if (_serverDriver.Bind(NetworkEndPoint.AnyIpv4) != 0)
             {
-                UILogManager.log.Write("Server failed to bind");
+                Debug.LogError("Server failed to bind");
             }
             else
             {
@@ -187,14 +175,13 @@ namespace Multiplayer.RelayManagement
                 // Once the driver is bound you can start listening for connection requests
                 if (_serverDriver.Listen() != 0)
                 {
-                    UILogManager.log.Write("Server failed to listen");
+                    Debug.LogError("Server failed to listen");
                 }
                 else
                 {
                     IsRelayServerConnected = true;
                 }
             }
-            UILogManager.log.Write("Server bound.");
         }
 
         public void DisconnectPlayer(int i)

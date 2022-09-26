@@ -66,7 +66,6 @@ namespace Multiplayer.MirrorCustom
                 else
                     Debug.LogError("URI was null");
                 StartCoroutine(_lobbyManager.CreateLobby(networkAddress, maxConnections, _privateServer));
-                Debug.Log("SERVER DOUBLE READY!!!!!!!!");
             }
         }
 

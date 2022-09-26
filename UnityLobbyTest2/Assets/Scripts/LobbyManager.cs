@@ -39,7 +39,7 @@ namespace Multiplayer.LobbyManagement
         {
             if (!_unityServicesInitialized)
             {
-                Debug.LogError("Unity Services have not been initialized!!!");
+                Debug.LogError("Unity Services have not been initialized!");
                 return false;
             }
             else 
@@ -58,7 +58,6 @@ namespace Multiplayer.LobbyManagement
             }
             if (initTask.IsFaulted)
             {
-                UILogManager.log.Write("Unity Services Initialization Failed");
                 Debug.LogError("Unity Services Initialization Failed");
                 yield break;
             }
@@ -71,7 +70,6 @@ namespace Multiplayer.LobbyManagement
             }
             if (logInTask.IsFaulted)
             {
-                UILogManager.log.Write("Failed Player Log-in");
                 Debug.LogError("Failed Player Log-in!");
                 yield break;
             }
@@ -98,8 +96,6 @@ namespace Multiplayer.LobbyManagement
         public IEnumerator CreateLobby(string address, int maxPlayers, bool isPrivate = false)
         {
             if (!IsUnityServicesInitialized()) yield break;
-
-            UILogManager.log.Write("Creating a Lobby");
 
             // Add some data to our player
             // This data will be included in a lobby under players -> player.data
@@ -129,17 +125,12 @@ namespace Multiplayer.LobbyManagement
                 yield return null;
             if (createLobby.IsFaulted)
             {
-                Debug.LogError("Lobby Creation Failed!!");
+                Debug.LogError("Lobby Creation Failed!");
                 yield break;
             }
             _currentLobby = createLobby.Result;
-
-            UILogManager.log.Write("Created new lobby " + _currentLobby.Name + " " + _currentLobby.Id);
-
             StartCoroutine(HeartbeatLobbyCoroutine(_currentLobby.Id, 15));
-
             IsConnectedToLobby = true;
-
             OnLobbyCreated?.Invoke();
         }
 
@@ -147,7 +138,6 @@ namespace Multiplayer.LobbyManagement
         {
             if (!IsUnityServicesInitialized()) yield break;
 
-            UILogManager.log.Write("Creating filters to join");
             List<QueryFilter> queryFilters = new List<QueryFilter>
         {
             // Let's search for games with open slots (AvailableSlots greater than 0)
@@ -178,14 +168,11 @@ namespace Multiplayer.LobbyManagement
             }
             if (findLobbyQuery.IsFaulted)
             {
-                UILogManager.log.Write("Lobby list retrieval failed!");
                 Debug.LogError("Lobby list retrieval failed!");
             }
             QueryResponse response = findLobbyQuery.Result;
 
             _currentLobbyList = response.Results;
-
-            UILogManager.log.Write("Found " + _currentLobbyList.Count + " results");
         }
 
         private IEnumerator JoinFirstLobby()
@@ -206,17 +193,11 @@ namespace Multiplayer.LobbyManagement
                 }
                 if (joinLobbyTask.IsFaulted)
                 {
-                    UILogManager.log.Write("Join Lobby request failed");
+                    Debug.LogError("Join Lobby request failed");
                     yield break;
                 }
                 _currentLobby = joinLobbyTask.Result;
-
-                UILogManager.log.Write("Joined lobby " + _currentLobby.Name);
-
                 string joinCode = _currentLobby.Data["Address"].Value;
-
-                UILogManager.log.Write("Join code is " + joinCode);
-
                 OnLobbyJoined?.Invoke(joinCode);
             }
         }
@@ -227,18 +208,14 @@ namespace Multiplayer.LobbyManagement
         {
             if (!AuthenticationService.Instance.IsSignedIn)
             {
-                UILogManager.log.Write("Trying to log in a player ...");
-
                 // Use Unity Authentication to log in
                 await AuthenticationService.Instance.SignInAnonymouslyAsync();
 
                 if (!AuthenticationService.Instance.IsSignedIn)
                 {
-                    UILogManager.log.Write("Player was not signed in successfully; unable to continue without a logged in player");
                     throw new InvalidOperationException("Player was not signed in successfully; unable to continue without a logged in player");
                 }
             }
-            UILogManager.log.Write("Player signed in as " + AuthenticationService.Instance.PlayerId);
 
             // Player objects have Get-only properties, so you need to initialize the data bag here if you want to use it
             return new Player(AuthenticationService.Instance.PlayerId, null, new Dictionary<string, PlayerDataObject>());
@@ -246,11 +223,9 @@ namespace Multiplayer.LobbyManagement
 
         private IEnumerator HeartbeatLobbyCoroutine(string lobbyId, float waitTimeSeconds)
         {
-            UILogManager.log.Write("Lobby Heartbeat");
             var delay = new WaitForSecondsRealtime(waitTimeSeconds);
             while (true)
             {
-                Debug.Log("Heartbeat");
                 Lobbies.Instance.SendHeartbeatPingAsync(lobbyId);
                 yield return delay;
             }

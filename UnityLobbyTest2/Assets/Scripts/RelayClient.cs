@@ -25,13 +25,11 @@ namespace Multiplayer.RelayManagement
 
         public IEnumerator InitClient(string joinCode)
         {
-            UILogManager.log.Write("Join code is " + joinCode);
             yield return ClientBindAndConnect(joinCode);
         }
 
         public void ClientEarlyUpdate()
         {
-            //Debug.Log("ClientEarlyUpdate");
             if (!(_driver.IsCreated && _connection.IsCreated)) return;
 
             _driver.ScheduleUpdate().Complete();
@@ -44,15 +42,11 @@ namespace Multiplayer.RelayManagement
             {
                 if (eventType == NetworkEvent.Type.Connect)
                 {
-                    UILogManager.log.Write("Client connected to the server");
-                    Debug.Log("We are now connected to the server");
                     IsClientConnected = true;
                     OnConnected?.Invoke();
                 }
                 else if (eventType == NetworkEvent.Type.Disconnect)
                 {
-                    UILogManager.log.Write("Client got disconnected from server");
-                    Debug.Log("Client disconnected from the server");
                     _connection = default(NetworkConnection);
                     OnDisconnected?.Invoke();
                 }
@@ -64,7 +58,6 @@ namespace Multiplayer.RelayManagement
                         array[i] = stream.ReadByte();
                     }
                     ArraySegment<byte> segment = new ArraySegment<byte>(array);
-                    Debug.Log("I Received Data");
                     OnDataReceived?.Invoke(segment, 0);
                 }
             }
@@ -72,7 +65,6 @@ namespace Multiplayer.RelayManagement
 
         public void ClientLateUpdate()
         {
-            //Debug.Log("ClientLateUpdate");
             if (!(_driver.IsCreated && _connection.IsCreated)) return;
         }
 
@@ -95,20 +87,16 @@ namespace Multiplayer.RelayManagement
         private IEnumerator ClientBindAndConnect(string relayJoinCode)
         {
             // Send the join request to the Relay service
-            UILogManager.log.Write("Attempting to join allocation with join code... " + relayJoinCode);
-
             var joinTask = RelayService.Instance.JoinAllocationAsync(relayJoinCode);
             while (!joinTask.IsCompleted)
                 yield return null;
             if (joinTask.IsFaulted)
             {
-                UILogManager.log.Write("Join Relay request failed");
+                Debug.LogError("Join Relay request failed");
                 yield break;
             }
             // Collect and convert the Relay data from the join response
             JoinAllocation = joinTask.Result;
-
-            UILogManager.log.Write($"Player allocated with allocation Id: {JoinAllocation.AllocationId}");
 
             // Format the server data, based on desired connectionType
             _serverData = RelayHelper.PlayerRelayData(JoinAllocation, "udp");
@@ -124,7 +112,7 @@ namespace Multiplayer.RelayManagement
             // This will send the bind request to the Relay server
             if (_driver.Bind(NetworkEndPoint.AnyIpv4) != 0)
             {
-                UILogManager.log.Write("Client failed to bind");
+                Debug.LogError("Client failed to bind");
             }
             else
             {
@@ -137,8 +125,6 @@ namespace Multiplayer.RelayManagement
                 // Once the client is bound to the Relay server, you can send a connection request
                 _connection = _driver.Connect(_serverData.Endpoint);
             }
-
-            UILogManager.log.Write("Conected");
 
             // Create Object
             JoinData = new RelayHelper.RelayJoinData
