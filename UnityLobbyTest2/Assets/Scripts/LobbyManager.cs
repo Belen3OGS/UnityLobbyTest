@@ -77,6 +77,8 @@ namespace Multiplayer.LobbyManagement
                 LoggedInPlayer = logInTask.Result;
 
             _unityServicesInitialized = true;
+
+            UILogManager.log.Write("Logged in as: " + LoggedInPlayer.Id);
         }
         #endregion
 
@@ -132,6 +134,8 @@ namespace Multiplayer.LobbyManagement
             StartCoroutine(HeartbeatLobbyCoroutine(_currentLobby.Id, 15));
             IsConnectedToLobby = true;
             OnLobbyCreated?.Invoke();
+            
+            Debug.Log(LoggedInPlayer.Id);
         }
 
         private IEnumerator FindLobbys()
@@ -197,13 +201,27 @@ namespace Multiplayer.LobbyManagement
                     yield break;
                 }
                 _currentLobby = joinLobbyTask.Result;
-                string joinCode = _currentLobby.Data["Address"].Value;
-                OnLobbyJoined?.Invoke(joinCode);
+                string adress = _currentLobby.Data["Address"].Value;
+                OnLobbyJoined?.Invoke(adress);
             }
         }
         #endregion
 
         #region Helper Functions
+        public async void DisconnectPlayer(string playerId)
+        {
+            await LobbyService.Instance.RemovePlayerAsync(_currentLobby.Id, playerId);
+        }
+
+        public string GetLastJoinedPlayerId()
+        {
+            foreach(var player in _currentLobby.Players)
+            {
+                Debug.Log("List Player id: " + player.Id);
+            }
+            return _currentLobby.Players[_currentLobby.Players.Count - 1].Id;
+        }
+
         private async Task<Player> GetPlayerFromAnonymousLoginAsync()
         {
             if (!AuthenticationService.Instance.IsSignedIn)

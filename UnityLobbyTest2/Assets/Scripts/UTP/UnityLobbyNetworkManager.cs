@@ -2,6 +2,7 @@
 using System;
 using UnityEngine;
 using Multiplayer.LobbyManagement;
+using System.Collections.Generic;
 
 namespace Multiplayer.MirrorCustom
 {
@@ -11,6 +12,8 @@ namespace Multiplayer.MirrorCustom
         private LobbyManager _lobbyManager;
         [SerializeField]
         private bool _privateServer;
+
+        private Dictionary<int, string> _connectionIdToLobbyId = new Dictionary<int, string>();
 
         public override void Start()
         {
@@ -49,11 +52,23 @@ namespace Multiplayer.MirrorCustom
         {
             base.OnStopServer();
             _lobbyManager.StopLobby();
+            _connectionIdToLobbyId.Clear();
         }
 
         public override void OnServerConnect(NetworkConnectionToClient conn)
         {
             base.OnServerConnect(conn);
+            string newPlayerLobbyId = (mode == NetworkManagerMode.ServerOnly || conn.connectionId != 0)  ? _lobbyManager.GetLastJoinedPlayerId() : "HOST";
+            Debug.Log("New Player Lobby Id: " + newPlayerLobbyId);
+            _connectionIdToLobbyId.Add(conn.connectionId, newPlayerLobbyId);
+        }
+
+        public override void OnServerDisconnect(NetworkConnectionToClient conn)
+        {
+            base.OnServerDisconnect(conn);
+            string lobbyId = _connectionIdToLobbyId[conn.connectionId];
+            Debug.Log("DISCONNECTING " + lobbyId);
+            if(!lobbyId.Equals("HOST")) _lobbyManager.DisconnectPlayer(lobbyId);
         }
 
         public override void OnStartHost()
