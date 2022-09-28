@@ -52,7 +52,6 @@ namespace Multiplayer.MirrorCustom
         {
             base.OnStopServer();
             _lobbyManager.StopLobby();
-            _connectionIdToLobbyId.Clear();
         }
 
         public override void OnServerConnect(NetworkConnectionToClient conn)
@@ -69,7 +68,6 @@ namespace Multiplayer.MirrorCustom
                 newPlayerLobbyId = await _lobbyManager.GetLastJoinedPlayerId();
             }
             else newPlayerLobbyId = "HOST";
-            Debug.Log("New Player Lobby Id: " + newPlayerLobbyId);
             _connectionIdToLobbyId.Add(conn.connectionId, newPlayerLobbyId);
         }
 
@@ -77,7 +75,6 @@ namespace Multiplayer.MirrorCustom
         {
             base.OnServerDisconnect(conn);
             string lobbyId = _connectionIdToLobbyId[conn.connectionId];
-            Debug.Log("DISCONNECTING " + lobbyId);
             if(!lobbyId.Equals("HOST")) _lobbyManager.DisconnectPlayer(lobbyId);
             _connectionIdToLobbyId.Remove(conn.connectionId);
         }
