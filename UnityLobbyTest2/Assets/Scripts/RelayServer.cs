@@ -89,6 +89,17 @@ namespace Multiplayer.RelayManagement
 
             _serverDriver.ScheduleUpdate().Complete();
 
+            //Cleanup Stale Connections
+            for(int i = 0; i < _connections.Length; i++)
+            {
+                if (!_connections[i].IsCreated)
+                {
+                    _connections.RemoveAtSwapBack(i);
+                    Debug.Log("RELAY CONNECTION CLEANED UP " + i);
+                    i--;
+                }
+            }
+
             //Accept incoming client connections
             NetworkConnection incomingConnection;
             while ((incomingConnection = _serverDriver.Accept()) != default(NetworkConnection))
@@ -122,6 +133,11 @@ namespace Multiplayer.RelayManagement
                                 array[j] = stream.ReadByte();
                             }
                             ArraySegment<byte> segment = new ArraySegment<byte>(array);
+                            Debug.Log("Current connection list:");
+                            foreach(var connection in _connections)
+                            {
+                                Debug.Log(connection.InternalId);
+                            }
                             OnServerDataReceived?.Invoke(i, segment, 0);
                         }
                     }
