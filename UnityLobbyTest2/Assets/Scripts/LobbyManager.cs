@@ -213,12 +213,9 @@ namespace Multiplayer.LobbyManagement
             await LobbyService.Instance.RemovePlayerAsync(_currentLobby.Id, playerId);
         }
 
-        public string GetLastJoinedPlayerId()
+        public async Task<string> GetLastJoinedPlayerId()
         {
-            foreach(var player in _currentLobby.Players)
-            {
-                Debug.Log("List Player id: " + player.Id);
-            }
+            _currentLobby = await LobbyService.Instance.GetLobbyAsync(_currentLobby.Id);
             return _currentLobby.Players[_currentLobby.Players.Count - 1].Id;
         }
 

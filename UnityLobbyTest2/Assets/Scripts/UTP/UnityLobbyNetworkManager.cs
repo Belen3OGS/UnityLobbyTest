@@ -58,7 +58,17 @@ namespace Multiplayer.MirrorCustom
         public override void OnServerConnect(NetworkConnectionToClient conn)
         {
             base.OnServerConnect(conn);
-            string newPlayerLobbyId = (mode == NetworkManagerMode.ServerOnly || conn.connectionId != 0)  ? _lobbyManager.GetLastJoinedPlayerId() : "HOST";
+            AddToLobbyIdsDictionary(conn);
+        }
+
+        public async void AddToLobbyIdsDictionary(NetworkConnectionToClient conn)
+        {
+            string newPlayerLobbyId;
+            if (mode == NetworkManagerMode.ServerOnly || conn.connectionId != 0)
+            {
+                newPlayerLobbyId = await _lobbyManager.GetLastJoinedPlayerId();
+            }
+            else newPlayerLobbyId = "HOST";
             Debug.Log("New Player Lobby Id: " + newPlayerLobbyId);
             _connectionIdToLobbyId.Add(conn.connectionId, newPlayerLobbyId);
         }
@@ -69,6 +79,7 @@ namespace Multiplayer.MirrorCustom
             string lobbyId = _connectionIdToLobbyId[conn.connectionId];
             Debug.Log("DISCONNECTING " + lobbyId);
             if(!lobbyId.Equals("HOST")) _lobbyManager.DisconnectPlayer(lobbyId);
+            _connectionIdToLobbyId.Remove(conn.connectionId);
         }
 
         public override void OnStartHost()
