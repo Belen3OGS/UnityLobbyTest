@@ -1,0 +1,465 @@
+----IL2CPP Arguments----
+--convert-to-cpp --compile-cpp --directory=C:/ProyectosUnity/UnityLobbyTest/UnityLobbyTest2/Temp/StagingArea/Managed --data-folder=C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Library\Il2cppBuildCache\Switch\il2cppOutput\Data --generatedcppdir=C:/ProyectosUnity/UnityLobbyTest/UnityLobbyTest2/Library/Il2cppBuildCache/Switch/il2cppOutput --symbols-folder=C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Library\Il2cppBuildCache\Switch\il2cppOutput\Symbols --additional-cpp=C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\SourcePlugins\lib_burst_generated.cpp --additional-cpp=C:/ProyectosUnity/UnityLobbyTest/UnityLobbyTest2/Library/Il2cppBuildCache/Switch/additionalCppFiles/UnlinkedFunctions.cpp --emit-null-checks --enable-stacktrace --enable-stats --enable-array-bounds-check --code-generation-option=EnableInlining --stats-output-dir=C:/ProyectosUnity/UnityLobbyTest/UnityLobbyTest2/Assets/../SwitchIL2CPPStats --platform=Switch --architecture=ARM64 --outputpath=C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Library/Il2cppBuildCache/Switch\Native\SwitchPlayer.nss --dont-deploy-baselib --verbose --libil2cpp-static --baselib-directory=C:\ProyectosUnity\Installs\2022.1.12f1\Editor\Data\PlaybackEngines\Switch\Native\develop --avoid-dynamic-library-copy --additional-defines=DEBUGMODE=1 --additional-defines=UNITY_RELEASE=0 --additional-defines=IL2CPP_USE_SOCKET_MULTIPLEX_IO=1 --additional-defines=IL2CPP_SUPPORT_SOCKETS_POSIX_API=1 --additional-defines=PLATFORM_SWITCH_USE_POSIX_SOCKET_API=1 --additional-include-directories=C:\ProyectosUnity\Installs\2022.1.12f1\Editor\Data\PlaybackEngines\Switch\Tools/il2cpp\bdwgc/include --additional-include-directories=C:\ProyectosUnity\Installs\2022.1.12f1\Editor\Data\PlaybackEngines\Switch\Tools/il2cpp\libil2cpp/include --plugin=C:/ProyectosUnity/Installs/2022.1.12f1/Editor/Data/PlaybackEngines/Switch/Tools\SwitchIl2CppPlugin.dll --incremental-g-c-time-slice=3 --configuration=Release --linker-flags-file=C:/ProyectosUnity/UnityLobbyTest/UnityLobbyTest2/SwitchIL2CPPCache/il2cpp_cache/linkerflags/linkerflags.txt --dotnetprofile=unityaot-linux --enable-debugger --cachedirectory=C:/ProyectosUnity/UnityLobbyTest/UnityLobbyTest2/Assets/../SwitchIL2CPPCache/il2cpp_cache --profiler-report --profiler-output-file=C:/ProyectosUnity/UnityLobbyTest/UnityLobbyTest2/SwitchIL2CPPCache/il2cpp_cache/buildstate/artifacts/il2cpp_conv_vn4w.traceevents
+
+----Assemblies Converted-----
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\Assembly-CSharp.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\kcp2k.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\Mirror.Authenticators.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\Mirror.Components.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\Mirror.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\Mirror.Examples.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\Mono.Security.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\mscorlib.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\Newtonsoft.Json.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\SimpleWebTransport.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\System.Configuration.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\System.Core.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\System.Data.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\System.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\System.Numerics.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\System.Runtime.Serialization.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\System.Xml.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\System.Xml.Linq.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\Telepathy.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\Unity.Burst.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\Unity.Burst.Unsafe.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\Unity.Collections.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\Unity.Collections.LowLevel.ILSupport.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\Unity.Mathematics.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\Unity.Networking.Transport.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\Unity.Services.Authentication.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\Unity.Services.Core.Configuration.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\Unity.Services.Core.Device.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\Unity.Services.Core.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\Unity.Services.Core.Environments.Internal.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\Unity.Services.Core.Internal.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\Unity.Services.Core.Registration.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\Unity.Services.Core.Scheduler.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\Unity.Services.Core.Telemetry.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\Unity.Services.Core.Threading.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\Unity.Services.Lobbies.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\Unity.Services.QoS.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\Unity.Services.Relay.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\Unity.TextMeshPro.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\UnityEngine.AIModule.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\UnityEngine.AndroidJNIModule.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\UnityEngine.AnimationModule.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\UnityEngine.AssetBundleModule.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\UnityEngine.AudioModule.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\UnityEngine.CoreModule.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\UnityEngine.DirectorModule.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\UnityEngine.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\UnityEngine.GridModule.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\UnityEngine.IMGUIModule.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\UnityEngine.InputLegacyModule.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\UnityEngine.InputModule.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\UnityEngine.JSONSerializeModule.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\UnityEngine.ParticleSystemModule.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\UnityEngine.Physics2DModule.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\UnityEngine.PhysicsModule.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\UnityEngine.SharedInternalsModule.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\UnityEngine.SpriteShapeModule.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\UnityEngine.SubsystemsModule.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\UnityEngine.SwitchModule.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\UnityEngine.TerrainModule.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\UnityEngine.TextCoreFontEngineModule.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\UnityEngine.TextCoreTextEngineModule.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\UnityEngine.TextRenderingModule.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\UnityEngine.TilemapModule.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\UnityEngine.TLSModule.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\UnityEngine.UI.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\UnityEngine.UIElementsModule.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\UnityEngine.UIElementsNativeModule.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\UnityEngine.UIModule.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\UnityEngine.UnityWebRequestModule.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\UnityEngine.VFXModule.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\UnityEngine.VideoModule.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\UnityEngine.VRModule.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\UnityEngine.XRModule.dll
+	C:\ProyectosUnity\UnityLobbyTest\UnityLobbyTest2\Temp\StagingArea\Managed\where-allocations.dll
+
+----- il2cpp Statistics -----
+General:
+	Conversion Time: 11,109 s
+	Job Count: 16
+	Processor Count: 16
+	Files Written: 475
+	String Literals: 11659
+Methods:
+	Total Methods: 121059
+	Non-Generic Methods: 66785
+	Generic Type Methods: 43671
+	Generic Methods: 10603
+	Shared Methods: 53815
+	Methods with Tail Calls : 0
+Metadata:
+	Total: 167.655,56 kb
+	String Literals: 0,25 kb
+	String Literal Data: 91,34 kb
+	Metadata Strings: 441,16 kb
+	Events: 1.565,03 kb
+	Properties: 1.568,33 kb
+	Methods: 1.858,51 kb
+	Parameter Default Values: 4.214,66 kb
+	Field Default Values: 4.227,65 kb
+	Field and Parameter Default Values Data: 4.356,44 kb
+	Field Marshaled Sizes: 4.474,76 kb
+	Parameters: 4.504,02 kb
+	Fields: 5.526,23 kb
+	Generic Parameters: 5.976,27 kb
+	Generic Parameter Constraints: 6.029,63 kb
+	Generic Containers: 6.039,46 kb
+	Nested Types: 6.072,76 kb
+	Interfaces: 6.083,91 kb
+	VTables: 6.096,98 kb
+	Interface Offsets: 6.499,57 kb
+	Type Definitions: 6.569,45 kb
+	Images: 7.356,63 kb
+	Assemblies: 7.359,60 kb
+	Field Refs: 7.364,35 kb
+	Referenced Assemblies: 7.366,44 kb
+	Attribute Data: 7.368,01 kb
+	Attribute Data Ranges: 7.925,66 kb
+	Unresolved Virtual Call Parameter Types: 8.110,03 kb
+	Unresolved Virtual Call Parameter Ranges: 8.138,43 kb
+	Windows Runtime Type Names: 8.156,67 kb
+	Windows Runtime Strings: 8.156,67 kb
+	Exported Types: 8.156,67 kb
+Codegen:
+	NullChecks : 211788
+Interop:
+	Windows Runtime boxed types : 0
+	Windows Runtime types with names : 0
+	Native to managed interface adapters : 0
+	Array COM callable wrappers : 0
+	COM callable wrappers : 0
+	COM callable wrapper methods that were implemented : 0
+	COM callable wrapper methods that were stripped : 0
+	COM callable wrapper methods that were forwarded to call base class method : 0
+Compilation:
+	Total Files: 664
+	Files Compiled: 42
+	Cache Hits: 622
+	Cache Hit %: 93
+
+
+----Assembly Conversion Times----
+	Convert  (2,211ms)
+
+----Generated Files----
+__Generated.cpp	4599
+Assembly-CSharp.cpp	4061279
+Assembly-CSharp1.cpp	2394678
+Assembly-CSharp2.cpp	2740570
+Assembly-CSharp3.cpp	1740294
+GenericMethods.cpp	2905730
+GenericMethods1.cpp	2855059
+GenericMethods10.cpp	2443247
+GenericMethods11.cpp	1683699
+GenericMethods12.cpp	4104364
+GenericMethods13.cpp	3215391
+GenericMethods14.cpp	2398360
+GenericMethods15.cpp	3103328
+GenericMethods16.cpp	3759167
+GenericMethods17.cpp	4075774
+GenericMethods18.cpp	2971330
+GenericMethods19.cpp	4124590
+GenericMethods2.cpp	2791228
+GenericMethods20.cpp	1398537
+GenericMethods3.cpp	2706810
+GenericMethods4.cpp	1484846
+GenericMethods5.cpp	5049491
+GenericMethods6.cpp	3005525
+GenericMethods7.cpp	1151638
+GenericMethods8.cpp	1291542
+GenericMethods9.cpp	3165625
+Generics.cpp	3670506
+Generics1.cpp	2199515
+Generics10.cpp	2689298
+Generics11.cpp	2145800
+Generics12.cpp	2623767
+Generics13.cpp	1606957
+Generics14.cpp	1414134
+Generics15.cpp	1488619
+Generics16.cpp	1453271
+Generics17.cpp	1483536
+Generics18.cpp	1474732
+Generics19.cpp	1525173
+Generics2.cpp	3390015
+Generics20.cpp	1941037
+Generics21.cpp	7687304
+Generics22.cpp	3580877
+Generics23.cpp	3674724
+Generics24.cpp	2464839
+Generics25.cpp	2281765
+Generics26.cpp	2041830
+Generics27.cpp	1667514
+Generics28.cpp	1659307
+Generics29.cpp	2402729
+Generics3.cpp	2871341
+Generics30.cpp	3369825
+Generics31.cpp	3455156
+Generics32.cpp	3336496
+Generics33.cpp	2171222
+Generics34.cpp	1667925
+Generics35.cpp	4055660
+Generics36.cpp	3563312
+Generics37.cpp	3485709
+Generics38.cpp	3544817
+Generics39.cpp	2649185
+Generics4.cpp	2224529
+Generics40.cpp	2525085
+Generics41.cpp	1753349
+Generics42.cpp	1670312
+Generics43.cpp	1658690
+Generics44.cpp	1735738
+Generics45.cpp	1690228
+Generics46.cpp	1720821
+Generics47.cpp	1660511
+Generics48.cpp	1725230
+Generics49.cpp	1742065
+Generics5.cpp	2232674
+Generics50.cpp	2182502
+Generics51.cpp	3746798
+Generics52.cpp	4713481
+Generics53.cpp	4140533
+Generics54.cpp	3029573
+Generics55.cpp	1721167
+Generics56.cpp	2935404
+Generics57.cpp	1652817
+Generics58.cpp	2830988
+Generics59.cpp	2570811
+Generics6.cpp	2252137
+Generics60.cpp	2365813
+Generics61.cpp	3143590
+Generics62.cpp	2882867
+Generics63.cpp	2747768
+Generics64.cpp	3096474
+Generics65.cpp	2775641
+Generics66.cpp	3665712
+Generics67.cpp	2727677
+Generics68.cpp	2257587
+Generics69.cpp	1998075
+Generics7.cpp	2320508
+Generics70.cpp	2250751
+Generics71.cpp	1588021
+Generics72.cpp	1058030
+Generics73.cpp	2146294
+Generics8.cpp	2818955
+Generics9.cpp	2805629
+Il2CppCCalculateFieldValues.cpp	3063297
+Il2CppCCalculateFieldValues1.cpp	3392107
+Il2CppCCalculateFieldValues2.cpp	3250003
+Il2CppCCalculateFieldValues3.cpp	97008
+Il2CppCCalculateTypeValues.cpp	5164756
+Il2CppCCalculateTypeValues1.cpp	3375791
+Il2CppCCFieldValuesTable.cpp	524147
+Il2CppCCTypeValuesTable.cpp	849863
+Il2CppCodeRegistration.cpp	11381
+Il2CppInteropDataTable.cpp	522696
+Il2CppInvokerTable.cpp	13417571
+Il2CppReversePInvokeWrapperTable.cpp	36943
+Il2cppUnresolvedIndirectCallStubs.cpp	1690601
+kcp2k.cpp	955531
+lib_burst_generated.cpp	302
+Mirror.Authenticators.cpp	1225097
+Mirror.Components.cpp	2822279
+Mirror.Components1.cpp	1533690
+Mirror.cpp	3253902
+Mirror.Examples.cpp	3077577
+Mirror.Examples1.cpp	1596287
+Mirror1.cpp	3781828
+Mono.Security.cpp	1430157
+Mono.Security1.cpp	988462
+mscorlib.cpp	1403051
+mscorlib1.cpp	1468629
+mscorlib10.cpp	1372891
+mscorlib11.cpp	1650875
+mscorlib12.cpp	972911
+mscorlib13.cpp	1173095
+mscorlib14.cpp	2010205
+mscorlib15.cpp	2001439
+mscorlib16.cpp	1705182
+mscorlib17.cpp	2426507
+mscorlib18.cpp	2238560
+mscorlib19.cpp	2024773
+mscorlib2.cpp	2050214
+mscorlib20.cpp	1623691
+mscorlib21.cpp	1626942
+mscorlib22.cpp	1380745
+mscorlib23.cpp	696604
+mscorlib3.cpp	1641224
+mscorlib4.cpp	1662904
+mscorlib5.cpp	2259649
+mscorlib6.cpp	1784603
+mscorlib7.cpp	1774798
+mscorlib8.cpp	1905094
+mscorlib9.cpp	2095071
+Newtonsoft.Json.cpp	3096897
+Newtonsoft.Json1.cpp	2416609
+Newtonsoft.Json2.cpp	2459932
+Newtonsoft.Json3.cpp	2518946
+Newtonsoft.Json4.cpp	3727816
+Newtonsoft.Json5.cpp	3436015
+Newtonsoft.Json6.cpp	2979635
+Newtonsoft.Json7.cpp	2422420
+Newtonsoft.Json8.cpp	1767800
+SimpleWebTransport.cpp	1403641
+System.Configuration.cpp	36562
+System.Core.cpp	1988006
+System.Core1.cpp	2535795
+System.Core2.cpp	3020656
+System.Core3.cpp	2372521
+System.Core4.cpp	805255
+System.cpp	2320941
+System.Data.cpp	1955524
+System.Data1.cpp	1568114
+System.Data2.cpp	1967184
+System.Data3.cpp	1312939
+System.Data4.cpp	1610293
+System.Data5.cpp	1437557
+System.Data6.cpp	1431175
+System.Data7.cpp	1755555
+System.Data8.cpp	1501410
+System.Data9.cpp	1099656
+System.Numerics.cpp	937939
+System.Runtime.Serialization.cpp	21361
+System.Xml.cpp	1278268
+System.Xml.Linq.cpp	771033
+System.Xml1.cpp	1422532
+System.Xml10.cpp	1746965
+System.Xml11.cpp	1851870
+System.Xml12.cpp	1882014
+System.Xml13.cpp	2118206
+System.Xml14.cpp	1977986
+System.Xml15.cpp	2173939
+System.Xml16.cpp	1387287
+System.Xml2.cpp	1721634
+System.Xml3.cpp	1267669
+System.Xml4.cpp	1978136
+System.Xml5.cpp	1612719
+System.Xml6.cpp	1796962
+System.Xml7.cpp	1829347
+System.Xml8.cpp	2019743
+System.Xml9.cpp	2116076
+System1.cpp	888140
+System10.cpp	1798491
+System11.cpp	693572
+System2.cpp	1600800
+System3.cpp	1077177
+System4.cpp	1825140
+System5.cpp	1843334
+System6.cpp	2140093
+System7.cpp	2069746
+System8.cpp	2212322
+System9.cpp	2124695
+Telepathy.cpp	567721
+Unity.Burst.cpp	6988880
+Unity.Burst.Unsafe.cpp	14430
+Unity.Burst1.cpp	2029244
+Unity.Burst2.cpp	1814546
+Unity.Burst3.cpp	165311
+Unity.Collections.cpp	3792606
+Unity.Collections.LowLevel.ILSupport.cpp	5214
+Unity.Collections1.cpp	3304156
+Unity.Collections2.cpp	507979
+Unity.Mathematics.cpp	11383060
+Unity.Mathematics1.cpp	4332893
+Unity.Mathematics10.cpp	4386598
+Unity.Mathematics11.cpp	3569033
+Unity.Mathematics12.cpp	1812187
+Unity.Mathematics2.cpp	3873950
+Unity.Mathematics3.cpp	3942329
+Unity.Mathematics4.cpp	3658843
+Unity.Mathematics5.cpp	3727618
+Unity.Mathematics6.cpp	5346178
+Unity.Mathematics7.cpp	3640668
+Unity.Mathematics8.cpp	4088361
+Unity.Mathematics9.cpp	2653783
+Unity.Networking.Transport.cpp	2769373
+Unity.Networking.Transport1.cpp	2893298
+Unity.Networking.Transport2.cpp	597381
+Unity.Services.Authentication.cpp	1672990
+Unity.Services.Core.Configuration.cpp	220331
+Unity.Services.Core.cpp	188684
+Unity.Services.Core.Device.cpp	51529
+Unity.Services.Core.Environments.Internal.cpp	7242
+Unity.Services.Core.Internal.cpp	1347195
+Unity.Services.Core.Registration.cpp	470420
+Unity.Services.Core.Scheduler.cpp	112565
+Unity.Services.Core.Telemetry.cpp	567262
+Unity.Services.Core.Threading.cpp	53797
+Unity.Services.Lobbies.cpp	3094793
+Unity.Services.Lobbies1.cpp	544261
+Unity.Services.QoS.cpp	2029713
+Unity.Services.Relay.cpp	1861617
+Unity.TextMeshPro.cpp	1295745
+Unity.TextMeshPro1.cpp	1319384
+Unity.TextMeshPro2.cpp	2146755
+Unity.TextMeshPro3.cpp	2626616
+Unity.TextMeshPro4.cpp	1961780
+Unity.TextMeshPro5.cpp	2448510
+Unity.TextMeshPro6.cpp	3114884
+Unity.TextMeshPro7.cpp	1261491
+UnityEngine.AIModule.cpp	26948
+UnityEngine.AndroidJNIModule.cpp	933862
+UnityEngine.AnimationModule.cpp	375667
+UnityEngine.AssetBundleModule.cpp	29130
+UnityEngine.AudioModule.cpp	84942
+UnityEngine.CoreModule.cpp	3440727
+UnityEngine.CoreModule1.cpp	3547170
+UnityEngine.CoreModule2.cpp	1170985
+UnityEngine.cpp	4333
+UnityEngine.DirectorModule.cpp	17719
+UnityEngine.GridModule.cpp	4773
+UnityEngine.IMGUIModule.cpp	2410046
+UnityEngine.IMGUIModule1.cpp	1597298
+UnityEngine.InputLegacyModule.cpp	229592
+UnityEngine.InputModule.cpp	44441
+UnityEngine.JSONSerializeModule.cpp	22491
+UnityEngine.ParticleSystemModule.cpp	80172
+UnityEngine.Physics2DModule.cpp	279666
+UnityEngine.PhysicsModule.cpp	347953
+UnityEngine.SharedInternalsModule.cpp	245825
+UnityEngine.SpriteShapeModule.cpp	2835
+UnityEngine.SubsystemsModule.cpp	129810
+UnityEngine.SwitchModule.cpp	109852
+UnityEngine.TerrainModule.cpp	299215
+UnityEngine.TextCoreFontEngineModule.cpp	510518
+UnityEngine.TextCoreTextEngineModule.cpp	943688
+UnityEngine.TextCoreTextEngineModule1.cpp	1425077
+UnityEngine.TextCoreTextEngineModule2.cpp	2535717
+UnityEngine.TextCoreTextEngineModule3.cpp	919526
+UnityEngine.TextRenderingModule.cpp	234776
+UnityEngine.TilemapModule.cpp	238943
+UnityEngine.TLSModule.cpp	41152
+UnityEngine.UI.cpp	3013430
+UnityEngine.UI1.cpp	2196754
+UnityEngine.UI2.cpp	2523381
+UnityEngine.UI3.cpp	3393012
+UnityEngine.UI4.cpp	537060
+UnityEngine.UIElementsModule.cpp	3376357
+UnityEngine.UIElementsModule1.cpp	2778001
+UnityEngine.UIElementsModule10.cpp	2466189
+UnityEngine.UIElementsModule11.cpp	2335429
+UnityEngine.UIElementsModule12.cpp	2670562
+UnityEngine.UIElementsModule13.cpp	1997765
+UnityEngine.UIElementsModule14.cpp	910503
+UnityEngine.UIElementsModule2.cpp	3606317
+UnityEngine.UIElementsModule3.cpp	3326857
+UnityEngine.UIElementsModule4.cpp	3584254
+UnityEngine.UIElementsModule5.cpp	3131114
+UnityEngine.UIElementsModule6.cpp	3792775
+UnityEngine.UIElementsModule7.cpp	2213930
+UnityEngine.UIElementsModule8.cpp	3168782
+UnityEngine.UIElementsModule9.cpp	3176199
+UnityEngine.UIElementsNativeModule.cpp	621881
+UnityEngine.UIModule.cpp	338097
+UnityEngine.UnityWebRequestModule.cpp	703038
+UnityEngine.VFXModule.cpp	112389
+UnityEngine.VideoModule.cpp	71816
+UnityEngine.VRModule.cpp	11156
+UnityEngine.XRModule.cpp	333671
+UnlinkedFunctions.cpp	331
+where-allocations.cpp	70418
+
